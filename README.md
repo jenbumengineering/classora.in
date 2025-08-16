@@ -81,7 +81,11 @@ After running the database seed, you can use the following demo accounts:
 
 ### Admin Account
 - **Email**: `admin@example.com`
+<<<<<<< HEAD
 - **Password**: `admin123`
+=======
+- **Password**: `admin@123456`
+>>>>>>> f2cc0cb77ef24e145b952fbb1a02c96461a7e60a
 - **Access**: Full system administration
 
 ### Professor Account
