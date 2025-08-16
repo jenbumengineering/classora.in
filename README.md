@@ -78,8 +78,8 @@ Visit [http://localhost:3000](http://localhost:3000) to see the application.
 ## 👥 Demo Accounts
 
 ### Admin Account
-- **Email**: `jenbumengineering@gmail.com`
-- **Password**: `M@inong5567`
+- **Email**: `admin@example.com`
+- **Password**: `admin@123456`
 - **Access**: Full system administration
 
 ### Professor Account
