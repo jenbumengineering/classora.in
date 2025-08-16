@@ -45,7 +45,7 @@ A comprehensive educational platform built for professors and students, featurin
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/classora.in.git
+git clone https://github.com/jenbumengineering/classora.in.git
 cd classora.in
 ```
 
@@ -77,9 +77,11 @@ Visit [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## 👥 Demo Accounts
 
+After running the database seed, you can use the following demo accounts:
+
 ### Admin Account
-- **Email**: `jenbumengineering@gmail.com`
-- **Password**: `M@inong5567`
+- **Email**: `admin@example.com`
+- **Password**: `admin123`
 - **Access**: Full system administration
 
 ### Professor Account
@@ -91,6 +93,8 @@ Visit [http://localhost:3000](http://localhost:3000) to see the application.
 - **Email**: `student@example.com`
 - **Password**: `password123`
 - **Access**: Browse classes, take quizzes, submit assignments
+
+> **Note**: For production deployment, make sure to change these default credentials and use strong passwords.
 
 ## 🏗️ Project Structure
 
