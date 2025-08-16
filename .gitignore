@@ -123,5 +123,7 @@ uploads/
 .env.local
 .env.development.local
 .env.test.local
-.env.production.local 
+.env.production.local
 
+# Demo credentials (contains sensitive information)
+DEMO_CREDENTIALS.md
