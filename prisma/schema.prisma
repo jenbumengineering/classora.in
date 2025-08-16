@@ -1,0 +1,513 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Note: Using String instead of enum for SQLite compatibility
+// UserRole: "STUDENT" | "PROFESSOR" | "ADMIN"
+// ContentStatus: "DRAFT" | "PUBLISHED" | "PRIVATE"
+// QuizType: "MULTIPLE_CHOICE" | "MULTIPLE_SELECTION" | "SHORT_ANSWER"
+// ProgrammingLanguage: "JAVA" | "C" | "CPP" | "CSHARP" | "PYTHON" | "MYSQL"
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          String    @default("STUDENT")
+  avatar        String?
+  bio           String?
+  resetToken    String?
+  resetTokenExpiry DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Professor relationships
+  createdNotes      Note[]
+  createdQuizzes    Quiz[]
+  createdAssignments Assignment[]
+  classes           Class[]
+  teacherProfile    TeacherProfile?
+  createdPracticeQuestions PracticeQuestion[] @relation("PracticeQuestionCreator")
+  createdPracticeFiles PracticeFile[]
+  createdCalendarEvents CalendarEvent[]
+  settings UserSettings?
+  notifications Notification[]
+  sentInvitations Invitation[]
+
+  // Student relationships
+  enrollments       Enrollment[]
+  quizAttempts      QuizAttempt[]
+  assignmentSubmissions AssignmentSubmission[]
+  practiceQuestionAttempts PracticeQuestionAttempt[] @relation("PracticeQuestionAttempts")
+  studentProfile    StudentProfile?
+  assignmentViews   StudentAssignmentView[]
+  quizViews         StudentQuizView[]
+  noteViews         StudentNoteView[]
+
+  @@map("users")
+}
+
+model TeacherProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  university      String?
+  college         String?
+  department      String?
+  address         String?
+  phone           String?
+  website         String?
+  linkedin        String?
+  researchInterests String?
+  qualifications  String?
+  experience      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("teacher_profiles")
+}
+
+model StudentProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  university      String?
+  college         String?
+  department      String?
+  semester        String?
+  class           String?
+  registrationNo  String?
+  rollNo          String?
+  phone           String?
+  address         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+model Class {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  code        String    @unique
+  professorId String
+  isPrivate   Boolean   @default(false)
+  isArchived  Boolean   @default(false)
+  archivedAt  DateTime?
+  professor   User      @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  enrollments Enrollment[]
+  notes       Note[]
+  quizzes     Quiz[]
+  assignments Assignment[]
+  practiceFiles PracticeFile[]
+  calendarEvents CalendarEvent[]
+  invitations Invitation[]
+
+  @@map("classes")
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  studentId String
+  classId   String
+  enrolledAt DateTime @default(now())
+  
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classId])
+  @@map("enrollments")
+}
+
+model Note {
+  id          String        @id @default(cuid())
+  title       String
+  content     String
+  status      String    @default("DRAFT")
+  category    String?
+  classId     String
+  professorId String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  class       Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  professor   User          @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  linkedQuizzes Quiz[]
+  linkedAssignments Assignment[]
+  studentViews StudentNoteView[]
+
+  @@map("notes")
+}
+
+model Quiz {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  type        String
+  status      String    @default("DRAFT")
+  timeLimit   Int?          // in minutes
+  maxAttempts Int           @default(1)
+  classId     String
+  professorId String
+  noteId      String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  class       Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  professor   User          @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  linkedNote  Note?         @relation(fields: [noteId], references: [id])
+  questions   Question[]
+  attempts    QuizAttempt[]
+  studentViews StudentQuizView[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id          String    @id @default(cuid())
+  quizId      String
+  question    String
+  type        String
+  points      Int       @default(1)
+  order       Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  quiz        Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options     QuestionOption[]
+
+  @@map("questions")
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean  @default(false)
+  order      Int
+  createdAt  DateTime @default(now())
+
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_options")
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  quizId    String
+  studentId String
+  score     Float?
+  timeSpent Int?     // in seconds
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers   Answer[]
+
+  @@map("quiz_attempts")
+}
+
+model Answer {
+  id            String   @id @default(cuid())
+  attemptId     String
+  questionId    String
+  selectedOptions String? // JSON array of selected option IDs
+  isCorrect     Boolean?
+  points        Float?
+  createdAt     DateTime @default(now())
+
+  attempt       QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
+}
+
+model Assignment {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String?
+  dueDate     DateTime?
+  status      String    @default("DRAFT")
+  category    String?
+  classId     String
+  professorId String
+  noteId      String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  class       Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  professor   User          @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  linkedNote  Note?         @relation(fields: [noteId], references: [id])
+  submissions AssignmentSubmission[]
+  studentViews StudentAssignmentView[]
+
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id            String   @id @default(cuid())
+  assignmentId  String
+  studentId     String
+  fileUrl       String?
+  submittedAt   DateTime @default(now())
+  grade         Float?
+  feedback      String?
+  gradedAt      DateTime?
+  gradedBy      String?
+
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student       User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("assignment_submissions")
+}
+
+
+
+// Practice Questions Models
+model PracticeQuestion {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  subject     String
+  difficulty  String   // "EASY" | "MEDIUM" | "HARD"
+  type        String   // "MULTIPLE_CHOICE" | "SHORT_ANSWER"
+  points      Int      @default(10)
+  timeLimit   Int?     // minutes
+  professorId String?  // Professor ID who created this question
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  professor   User? @relation("PracticeQuestionCreator", fields: [professorId], references: [id])
+  options     PracticeQuestionOption[]
+  attempts    PracticeQuestionAttempt[]
+
+  @@map("practice_questions")
+}
+
+model PracticeQuestionOption {
+  id          String   @id @default(cuid())
+  questionId  String
+  text        String
+  isCorrect   Boolean  @default(false)
+  explanation String?  // Explanation for why this answer is correct
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  question    PracticeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("practice_question_options")
+}
+
+model PracticeQuestionAttempt {
+  id        String   @id @default(cuid())
+  questionId String
+  studentId String
+  answer    String?  // For short answer questions
+  selectedOptions String? // JSON array for multiple choice
+  isCorrect Boolean?
+  score     Float?
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+
+  question  PracticeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  student   User     @relation("PracticeQuestionAttempts", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("practice_question_attempts")
+}
+
+model PracticeFile {
+  id        String   @id @default(cuid())
+  title     String
+  description String?
+  fileUrl   String
+  classId   String
+  professorId String
+  uploadedAt DateTime @default(now())
+
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  professor User     @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  @@map("practice_files")
+}
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   // 'holiday', 'academic', 'todo'
+  date        DateTime
+  classId     String?
+  category    String?
+  priority    String?  // 'low', 'medium', 'high'
+  professorId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  class       Class?   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  professor   User     @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  @@map("calendar_events")
+}
+
+model UserSettings {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  notifications String @default("{\"email\":true,\"push\":true,\"assignments\":true,\"quizzes\":true,\"announcements\":true}")
+  privacy     String   @default("{\"profileVisibility\":\"classmates\",\"showEmail\":false,\"showPhone\":false}")
+  appearance  String   @default("{\"theme\":\"light\",\"fontSize\":\"medium\"}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        String   // 'assignment', 'quiz', 'announcement', 'general', 'system'
+  isRead      Boolean  @default(false)
+  data        String?  // JSON string for additional data (e.g., assignment ID, quiz ID)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Student content view tracking models
+model StudentAssignmentView {
+  id          String   @id @default(cuid())
+  studentId   String
+  assignmentId String
+  viewedAt    DateTime @default(now())
+
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignment  Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, assignmentId])
+  @@map("student_assignment_views")
+}
+
+model StudentQuizView {
+  id          String   @id @default(cuid())
+  studentId   String
+  quizId      String
+  viewedAt    DateTime @default(now())
+
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, quizId])
+  @@map("student_quiz_views")
+}
+
+model StudentNoteView {
+  id          String   @id @default(cuid())
+  studentId   String
+  noteId      String
+  viewedAt    DateTime @default(now())
+
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  note        Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, noteId])
+  @@map("student_note_views")
+}
+
+model ContactMessage {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  subject     String
+  message     String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("contact_messages")
+}
+
+model Invitation {
+  id          String   @id @default(cuid())
+  email       String
+  classId     String
+  professorId String
+  token       String   @unique
+  status      String   @default("PENDING") // "PENDING", "ACCEPTED", "EXPIRED"
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  professor   User     @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  @@unique([email, classId])
+  @@map("invitations")
+}
+
+model SystemSettings {
+  id                String   @id @default(cuid())
+  siteName          String   @default("Classora.in")
+  siteDescription   String   @default("Educational Platform for Professors and Students")
+  maintenanceMode   Boolean  @default(false)
+  registrationEnabled Boolean @default(true)
+  emailNotifications Boolean @default(true)
+  maxFileSize       Int      @default(10)
+  allowedFileTypes  String   @default("pdf,doc,docx,txt,jpg,jpeg,png")
+  sessionTimeout    Int      @default(24)
+  backupRetention   Int      @default(30)
+  emailHost         String   @default("mail.classora.in")
+  emailPort         Int      @default(587)
+  emailSecure       Boolean  @default(false)
+  emailFromEmail    String   @default("support@classora.in")
+  emailFromName     String   @default("Classora")
+  // Address fields
+  companyName       String   @default("Jenbum Engineering Pvt. Ltd.")
+  addressLine1      String   @default("123 Main Street")
+  addressLine2      String   @default("Suite 100")
+  city              String   @default("Mumbai")
+  state             String   @default("Maharashtra")
+  postalCode        String   @default("400001")
+  country           String   @default("India")
+  phone             String   @default("+91 1234567890")
+  website           String   @default("https://classora.in")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model Backup {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   @default("manual") // "manual" or "automatic"
+  status      String   @default("completed") // "completed", "in_progress", "failed"
+  size        Int?     // Size in bytes
+  path        String?  // File path
+  description String?
+  createdBy   String?  // User ID who created the backup
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("backups")
+} 
