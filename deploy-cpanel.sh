@@ -39,23 +39,23 @@ DATABASE_URL="mysql://username:password@localhost/database_name"
 
 # NextAuth Configuration
 NEXTAUTH_SECRET="your-secure-secret-key-here"
-NEXTAUTH_URL="https://your-domain.com/classora"
+NEXTAUTH_URL="https://classora.in"
 
 # Optional: Email Configuration
-SMTP_HOST="mail.your-domain.com"
+SMTP_HOST="mail.classora.in"
 SMTP_PORT="587"
-SMTP_USER="noreply@your-domain.com"
+SMTP_USER="noreply@classora.in"
 SMTP_PASS="your-email-password"
 EOF
 
 # Create deployment instructions
 echo "📖 Creating deployment instructions..."
 cat > DEPLOYMENT_INSTRUCTIONS.md << EOF
-# Quick cPanel Deployment Instructions
+# Quick cPanel Deployment Instructions for classora.in
 
 ## 1. Upload Files
 - Upload all files from this folder to your cPanel File Manager
-- Place them in: \`/public_html/classora/\`
+- Place them in: \`/public_html/\` (root domain)
 
 ## 2. Create Database
 - Go to cPanel > MySQL Databases
@@ -67,12 +67,14 @@ cat > DEPLOYMENT_INSTRUCTIONS.md << EOF
 - Update with your actual database and domain details
 
 ## 4. Install Dependencies
-- Via SSH: \`cd /home/username/public_html/classora && npm install --production\`
+- Via SSH: \`cd /home/username/public_html && npm install --production\`
 - Or via cPanel Terminal
 
 ## 5. Setup Node.js App
 - Go to cPanel > Node.js
 - Create application pointing to your directory
+- Application root: \`/home/username/public_html\`
+- Application URL: \`https://classora.in\`
 - Startup file: \`server.js\`
 
 ## 6. Run Database Migration
@@ -85,7 +87,7 @@ npx prisma generate
 - Restart your Node.js application in cPanel
 
 ## 8. Access Admin Panel
-- Visit: \`https://your-domain.com/classora/admin\`
+- Visit: \`https://classora.in/admin\`
 - Login: admin@example.com / admin@123456
 - **IMPORTANT**: Change password immediately!
 
@@ -100,9 +102,10 @@ echo "   - Environment template: .env.template"
 echo "   - Quick instructions: DEPLOYMENT_INSTRUCTIONS.md"
 echo ""
 echo "📋 Next steps:"
-echo "   1. Upload files to cPanel File Manager"
+echo "   1. Upload files to cPanel File Manager (public_html root)"
 echo "   2. Follow the deployment instructions"
 echo "   3. Configure your environment variables"
 echo "   4. Start your Node.js application"
 echo ""
+echo "🌐 Your application will be available at: https://classora.in"
 echo "📚 For detailed instructions, see: CPANEL_DEPLOYMENT_GUIDE.md"

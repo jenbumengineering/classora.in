@@ -34,6 +34,7 @@ cp next.config.js ./
 cp tailwind.config.js ./
 cp postcss.config.js ./
 cp tsconfig.json ./
+cp server.js ./
 cp .gitignore ./
 ```
 
@@ -63,28 +64,25 @@ npx prisma generate
    - Click **File Manager**
    - Navigate to `public_html`
 
-2. **Create Project Directory**
-   - Create a new folder called `classora`
-   - Upload all files from your deployment package
+2. **Upload Files to Root**
+   - **IMPORTANT**: Upload all files directly to `public_html` (root domain)
+   - Do NOT create a subdirectory
+   - This will make your app accessible at `https://classora.in`
 
 3. **Upload Files**
    - Select all files from your local `classora-deployment` folder
-   - Upload them to the `classora` directory in cPanel
+   - Upload them directly to the `public_html` directory in cPanel
 
 ### Method B: Using SSH (Recommended)
 ```bash
 # Connect to your server via SSH
-ssh username@your-domain.com
+ssh username@classora.in
 
 # Navigate to public_html
 cd public_html
 
-# Create project directory
-mkdir classora
-cd classora
-
 # Upload files using SCP (from your local machine)
-scp -r classora-deployment/* username@your-domain.com:public_html/classora/
+scp -r classora-deployment/* username@classora.in:public_html/
 ```
 
 ## Step 4: Install Dependencies
@@ -92,10 +90,10 @@ scp -r classora-deployment/* username@your-domain.com:public_html/classora/
 ### 4.1 Via SSH (Recommended)
 ```bash
 # Connect to your server
-ssh username@your-domain.com
+ssh username@classora.in
 
 # Navigate to project directory
-cd public_html/classora
+cd public_html
 
 # Install dependencies
 npm install --production
@@ -123,12 +121,12 @@ DATABASE_URL="postgresql://username:password@localhost/database_name"
 
 # NextAuth Configuration
 NEXTAUTH_SECRET="your-secure-secret-key-here"
-NEXTAUTH_URL="https://your-domain.com/classora"
+NEXTAUTH_URL="https://classora.in"
 
 # Optional: Email Configuration
-SMTP_HOST="mail.your-domain.com"
+SMTP_HOST="mail.classora.in"
 SMTP_PORT="587"
-SMTP_USER="noreply@your-domain.com"
+SMTP_USER="noreply@classora.in"
 SMTP_PASS="your-email-password"
 ```
 
@@ -140,8 +138,8 @@ SMTP_PASS="your-email-password"
 3. Configure:
    - **Node.js version**: 18.x or higher
    - **Application mode**: Production
-   - **Application root**: `/home/username/public_html/classora`
-   - **Application URL**: `https://your-domain.com/classora`
+   - **Application root**: `/home/username/public_html`
+   - **Application URL**: `https://classora.in`
    - **Application startup file**: `server.js`
 
 ### 6.2 Create Custom Server File
@@ -196,7 +194,7 @@ app.prepare().then(() => {
 ### 7.1 Run Migrations
 ```bash
 # Via SSH or Terminal
-cd /home/username/public_html/classora
+cd /home/username/public_html
 npx prisma migrate deploy
 npx prisma generate
 ```
@@ -224,13 +222,15 @@ npm start
 
 ## Step 9: Configure Domain/Subdomain
 
-### 9.1 Create Subdomain (Recommended)
-1. Go to **Subdomains** in cPanel
-2. Create subdomain: `classora.your-domain.com`
-3. Point to: `/public_html/classora`
+### 9.1 Root Domain Configuration
+1. **Your application will be accessible at**: `https://classora.in`
+2. **No subdomain or subdirectory needed**
+3. **All files are in the root of public_html**
 
-### 9.2 Or Use Subdirectory
-- Access via: `https://your-domain.com/classora`
+### 9.2 Domain Configuration
+- Ensure your domain `classora.in` points to your hosting
+- Configure DNS settings if needed
+- SSL certificate should be installed for the root domain
 
 ## Step 10: SSL Certificate
 
@@ -242,7 +242,7 @@ npm start
 ## Step 11: Post-Deployment Setup
 
 ### 11.1 Access Admin Panel
-1. Visit: `https://your-domain.com/classora/admin`
+1. Visit: `https://classora.in/admin`
 2. Login with default credentials:
    - Email: `admin@example.com`
    - Password: `admin@123456`
