@@ -18,6 +18,7 @@ cp -r ../app ./
 cp -r ../components ./
 cp -r ../lib ./
 cp -r ../prisma ./
+cp ../prisma/schema-mysql.prisma ./prisma/schema.prisma
 cp -r ../public ./
 cp -r ../hooks ./
 cp ../package.json ./
