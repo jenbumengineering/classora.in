@@ -18,6 +18,7 @@ interface ClassData {
   code: string
   description?: string
   isPrivate: boolean
+  gradientColor?: string
   createdAt: string
   professor: {
     id: string
@@ -38,8 +39,23 @@ export default function EditClassPage() {
     name: '',
     code: '',
     description: '',
-    isPrivate: false
+    isPrivate: false,
+    gradientColor: 'from-gray-900 to-black'
   })
+
+  const gradientOptions = [
+    { value: 'from-gray-900 to-black', label: 'Black', preview: 'bg-gradient-to-br from-gray-900 to-black' },
+    { value: 'from-blue-800 to-indigo-900', label: 'Blue', preview: 'bg-gradient-to-br from-blue-800 to-indigo-900' },
+    { value: 'from-purple-800 to-pink-900', label: 'Purple', preview: 'bg-gradient-to-br from-purple-800 to-pink-900' },
+    { value: 'from-green-800 to-emerald-900', label: 'Green', preview: 'bg-gradient-to-br from-green-800 to-emerald-900' },
+    { value: 'from-orange-800 to-red-900', label: 'Orange', preview: 'bg-gradient-to-br from-orange-800 to-red-900' },
+    { value: 'from-teal-800 to-cyan-900', label: 'Teal', preview: 'bg-gradient-to-br from-teal-800 to-cyan-900' },
+    { value: 'from-violet-800 to-purple-900', label: 'Violet', preview: 'bg-gradient-to-br from-violet-800 to-purple-900' },
+    { value: 'from-rose-800 to-pink-900', label: 'Rose', preview: 'bg-gradient-to-br from-rose-800 to-pink-900' },
+    { value: 'from-sky-800 to-blue-900', label: 'Sky', preview: 'bg-gradient-to-br from-sky-800 to-blue-900' },
+    { value: 'from-lime-800 to-green-900', label: 'Lime', preview: 'bg-gradient-to-br from-lime-800 to-green-900' },
+    { value: 'from-amber-800 to-orange-900', label: 'Amber', preview: 'bg-gradient-to-br from-amber-800 to-orange-900' }
+  ]
 
   const classId = params.id as string
 
@@ -66,7 +82,8 @@ export default function EditClassPage() {
         name: data.name,
         code: data.code,
         description: data.description || '',
-        isPrivate: data.isPrivate || false
+        isPrivate: data.isPrivate || false,
+        gradientColor: data.gradientColor || 'from-gray-900 to-black'
       })
     } catch (error) {
       console.error('Error loading class:', error)
@@ -109,6 +126,7 @@ export default function EditClassPage() {
           code: formData.code.trim(),
           description: formData.description.trim() || undefined,
           isPrivate: formData.isPrivate,
+          gradientColor: formData.gradientColor,
         }),
       })
 
@@ -277,6 +295,39 @@ export default function EditClassPage() {
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         Optional description to help students understand the class content
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Class Theme Color
+                      </label>
+                      <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                        {gradientOptions.map((option) => (
+                          <div
+                            key={option.value}
+                            className={`relative cursor-pointer rounded-lg border-2 transition-all ${
+                              formData.gradientColor === option.value
+                                ? 'border-blue-500 ring-2 ring-blue-200'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            onClick={() => setFormData(prev => ({ ...prev, gradientColor: option.value }))}
+                          >
+                            <div className={`h-16 rounded-lg ${option.preview} flex items-center justify-center`}>
+                              <span className="text-white text-xs font-medium">{option.label}</span>
+                            </div>
+                            {formData.gradientColor === option.value && (
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-sm text-gray-500">
+                        Choose a theme color for your class card. This will be used for the background and buttons.
                       </p>
                     </div>
 

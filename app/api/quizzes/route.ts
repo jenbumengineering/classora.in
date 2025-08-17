@@ -18,7 +18,6 @@ const createQuizSchema = z.object({
   classId: z.string().min(1, 'Class ID is required'),
   noteId: z.string().optional(),
   timeLimit: z.number().min(1).max(180).default(30),
-  maxAttempts: z.number().min(1).max(10).default(1),
   status: z.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).default('DRAFT'),
   questions: z.array(z.object({
     text: z.string().min(1, 'Question text is required'),
@@ -148,7 +147,6 @@ export async function GET(request: NextRequest) {
       className: `${quiz.class.code} - ${quiz.class.name}`,
       totalQuestions: quiz._count.questions,
       timeLimit: quiz.timeLimit || 0,
-      maxAttempts: quiz.maxAttempts || 1,
       status: quiz.status,
       createdAt: quiz.createdAt.toISOString(),
       updatedAt: quiz.updatedAt.toISOString(),
@@ -229,7 +227,6 @@ export async function POST(request: NextRequest) {
         type: 'STANDARD', // Default type for now
         status: validatedData.status,
         timeLimit: validatedData.timeLimit,
-        maxAttempts: validatedData.maxAttempts,
         classId: validatedData.classId,
         professorId: professorId,
         noteId: validatedData.noteId || null,

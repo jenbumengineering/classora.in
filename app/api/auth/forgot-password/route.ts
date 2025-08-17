@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
-import { sendEmail } from '@/lib/email'
+import { sendPasswordResetEmail } from '@/lib/email'
 import crypto from 'crypto'
 
 const prisma = new PrismaClient()
@@ -43,27 +43,25 @@ export async function POST(request: NextRequest) {
       }
     })
     
-                // Determine the base URL for the reset link
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                           (process.env.NODE_ENV === 'production' ? 'https://classora.in' : 'http://localhost:3000')
+    // Determine the base URL for the reset link
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                   (process.env.NODE_ENV === 'production' ? 'https://classora.in' : 'http://localhost:3000')
     const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`
 
-    // Send password reset email in background
-    sendEmail(user.email, 'passwordReset', {
+    // Send password reset email using the dedicated function
+    const emailResult = await sendPasswordResetEmail({
       userName: user.name,
       userEmail: user.email,
       resetToken: resetToken,
       resetUrl: resetUrl
-    }).then((emailResult) => {
-      if (emailResult.success) {
-        console.log('✅ Password reset email sent successfully to:', user.email)
-      } else {
-        console.error('❌ Failed to send password reset email:', emailResult.error)
-      }
-    }).catch((emailError) => {
-      console.error('❌ Error sending password reset email:', emailError)
-      // Don't fail the request if email fails, just log the error
     })
+
+    if (emailResult.success) {
+      console.log('✅ Password reset email sent successfully to:', user.email)
+    } else {
+      console.error('❌ Failed to send password reset email:', emailResult.error)
+      // Don't fail the request if email fails, just log the error
+    }
     
     return NextResponse.json(
       { message: 'If an account with that email exists, a password reset link has been sent.' },

@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
       })
       setUser(null)
-      router.push('/')
+      router.push('/auth/login')
     } catch (error) {
       console.error('Logout failed:', error)
     }

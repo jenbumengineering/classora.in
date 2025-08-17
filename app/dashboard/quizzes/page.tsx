@@ -195,7 +195,7 @@ export default function QuizzesPage() {
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-600">Attempts:</span>
                             <span className="font-medium">
-                              {quiz.attempts.length} / {quiz.maxAttempts}
+                              {quiz.attempts.length} (Unlimited)
                             </span>
                           </div>
                           {quiz.attempts.length > 0 && (

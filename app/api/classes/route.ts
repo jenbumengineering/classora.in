@@ -8,6 +8,7 @@ const createClassSchema = z.object({
   code: z.string().min(1, 'Class code is required'),
   description: z.string().optional(),
   isPrivate: z.boolean().default(false),
+  gradientColor: z.string().optional(),
 })
 
 // Validation schema for searching classes
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
         code: validatedData.code,
         description: validatedData.description,
         isPrivate: validatedData.isPrivate,
+        gradientColor: validatedData.gradientColor,
         professorId: professorId,
       },
       include: {

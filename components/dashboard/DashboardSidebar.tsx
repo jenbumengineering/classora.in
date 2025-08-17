@@ -41,7 +41,6 @@ export function DashboardSidebar({ isOpen, onClose, userRole }: DashboardSidebar
     { href: '/dashboard/assignments', label: 'Assignments', icon: FileText },
     { href: '/dashboard/quizzes', label: 'Quizzes', icon: Code },
     { href: '/dashboard/practice', label: 'Practice', icon: Target },
-    { href: '/dashboard/progress', label: 'Progress', icon: BarChart3 },
     { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]

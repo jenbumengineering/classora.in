@@ -8,6 +8,7 @@ const updateClassSchema = z.object({
   code: z.string().min(1, 'Class code is required').optional(),
   description: z.string().optional(),
   isPrivate: z.boolean().optional(),
+  gradientColor: z.string().optional(),
 })
 
 export async function GET(

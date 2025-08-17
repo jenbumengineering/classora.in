@@ -59,9 +59,7 @@ export async function GET(
     })
 
     return NextResponse.json({
-      attempts: attempts,
-      maxAttempts: quiz.maxAttempts,
-      remainingAttempts: Math.max(0, quiz.maxAttempts - attempts.length)
+      attempts: attempts
     })
   } catch (error) {
     console.error('Error fetching quiz attempts:', error)

@@ -517,6 +517,7 @@ export async function sendPasswordResetEmail(data: {
   userName: string
   userEmail: string
   resetToken: string
+  resetUrl: string
 }) {
   return await sendEmail(data.userEmail, 'passwordReset', data)
 }

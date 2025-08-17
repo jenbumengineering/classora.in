@@ -62,7 +62,7 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
         applySettings(data)
       } else {
         // Use default settings if API fails
-        const defaultSettings = {
+        const defaultSettings: UserSettings = {
           notifications: {
             email: true,
             push: true,
@@ -71,13 +71,13 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
             announcements: true
           },
           privacy: {
-            profileVisibility: 'classmates',
+            profileVisibility: 'classmates' as const,
             showEmail: false,
             showPhone: false
           },
           appearance: {
-            theme: 'light',
-            fontSize: 'medium'
+            theme: 'light' as const,
+            fontSize: 'medium' as const
           }
         }
         setSettings(defaultSettings)
@@ -86,7 +86,7 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
     } catch (error) {
       console.error('Error loading user settings:', error)
       // Use default settings on error
-      const defaultSettings = {
+      const defaultSettings: UserSettings = {
         notifications: {
           email: true,
           push: true,
@@ -95,13 +95,13 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
           announcements: true
         },
         privacy: {
-          profileVisibility: 'classmates',
+          profileVisibility: 'classmates' as const,
           showEmail: false,
           showPhone: false
         },
         appearance: {
-          theme: 'light',
-          fontSize: 'medium'
+          theme: 'light' as const,
+          fontSize: 'medium' as const
         }
       }
       setSettings(defaultSettings)

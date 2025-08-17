@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -9,7 +9,7 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Lock, Eye, EyeOff } from 'lucide-react'
 
-export default function ResetPassword() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   
@@ -227,5 +227,20 @@ export default function ResetPassword() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }

@@ -61,21 +61,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if student has reached the maximum number of attempts
-    const existingAttempts = await prisma.quizAttempt.findMany({
-      where: {
-        quizId: validatedData.quizId,
-        studentId: studentId
-      }
-    })
-
-    if (existingAttempts.length >= quiz.maxAttempts) {
-      return NextResponse.json(
-        { error: `You have reached the maximum number of attempts (${quiz.maxAttempts}) for this quiz` },
-        { status: 400 }
-      )
-    }
-
     // Calculate time spent
     const timeSpent = validatedData.startTime 
       ? Math.floor((Date.now() - new Date(validatedData.startTime).getTime()) / 1000) 

@@ -51,7 +51,6 @@ export default function NewQuizPage() {
     title: '',
     description: '',
     timeLimit: 30,
-    maxAttempts: 1,
     status: 'DRAFT' as 'DRAFT' | 'PUBLISHED' | 'CLOSED'
   })
 
@@ -404,24 +403,6 @@ export default function NewQuizPage() {
                           min="1"
                           max="180"
                         />
-                      </div>
-
-                      {/* Max Attempts */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Maximum Attempts
-                        </label>
-                        <input
-                          type="number"
-                          value={formData.maxAttempts}
-                          onChange={(e) => setFormData({ ...formData, maxAttempts: parseInt(e.target.value) || 1 })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          min="1"
-                          max="10"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Number of times students can attempt this quiz
-                        </p>
                       </div>
                     </CardContent>
                   </Card>

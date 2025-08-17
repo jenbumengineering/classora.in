@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let validatedData = { name: undefined, description: undefined }
+    let validatedData: { name?: string; description?: string } = { name: undefined, description: undefined }
     
     try {
       const body = await request.json()

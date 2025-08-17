@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const studentId = request.headers.get('x-user-id')
@@ -59,8 +62,22 @@ export async function GET(request: NextRequest) {
     // Count unique quizzes attempted (not total attempts)
     const uniqueQuizIds = Array.from(new Set(quizAttempts.map(attempt => attempt.quizId)))
     const completedQuizzes = uniqueQuizIds.length
-    const averageScore = quizAttempts.length > 0 
-      ? Math.round(quizAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0) / quizAttempts.length)
+    
+    // Calculate average score based on best score per unique quiz
+    const bestScoresByQuiz = new Map<string, number>()
+    
+    quizAttempts.forEach(attempt => {
+      const currentBest = bestScoresByQuiz.get(attempt.quizId)
+      const attemptScore = attempt.score || 0
+      
+      if (currentBest === undefined || attemptScore > currentBest) {
+        bestScoresByQuiz.set(attempt.quizId, attemptScore)
+      }
+    })
+    
+    const bestScores = Array.from(bestScoresByQuiz.values())
+    const averageScore = bestScores.length > 0 
+      ? Math.round(bestScores.reduce((sum, score) => sum + score, 0) / bestScores.length)
       : 0
 
     // Get assignment submissions
@@ -231,7 +248,7 @@ export async function GET(request: NextRequest) {
       time: formatTimeAgo(activity.time)
     }))
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       enrolledClasses: enrollments.length,
       completedQuizzes,
       totalQuizzes,
@@ -241,8 +258,21 @@ export async function GET(request: NextRequest) {
       studyStreak,
       upcomingDeadlines: upcomingDeadlinesList.length,
       recentActivity: formattedActivity,
-      upcomingDeadlinesList
+      upcomingDeadlinesList,
+      debug: {
+        calculationTime: new Date().toISOString(),
+        bestScoresCount: bestScores.length,
+        totalAttempts: quizAttempts.length,
+        uniqueQuizzes: uniqueQuizIds.length
+      }
     })
+    
+    // Add cache-busting headers
+    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    
+    return response
   } catch (error) {
     console.error('Error fetching student stats:', error)
     return NextResponse.json(

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const professorId = request.headers.get('x-user-id')
@@ -41,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Calculate total students across all classes
     const totalStudents = classes.reduce((sum, cls) => sum + cls._count.enrollments, 0)
 
-    // Get quiz attempts and calculate average score
+    // Get quiz attempts and calculate average score based on best score per unique quiz per student
     const quizAttempts = await prisma.quizAttempt.findMany({
       where: {
         quiz: {
@@ -49,12 +52,28 @@ export async function GET(request: NextRequest) {
         }
       },
       select: {
+        quizId: true,
+        studentId: true,
         score: true
       }
     })
 
-    const averageScore = quizAttempts.length > 0 
-      ? Math.round(quizAttempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0) / quizAttempts.length)
+    // Calculate average score based on best score per unique quiz per student
+    const bestScoresByQuizAndStudent = new Map<string, number>()
+    
+    quizAttempts.forEach(attempt => {
+      const key = `${attempt.quizId}-${attempt.studentId}`
+      const currentBest = bestScoresByQuizAndStudent.get(key)
+      const attemptScore = attempt.score || 0
+      
+      if (currentBest === undefined || attemptScore > currentBest) {
+        bestScoresByQuizAndStudent.set(key, attemptScore)
+      }
+    })
+    
+    const bestScores = Array.from(bestScoresByQuizAndStudent.values())
+    const averageScore = bestScores.length > 0 
+      ? Math.round(bestScores.reduce((sum, score) => sum + score, 0) / bestScores.length)
       : 0
 
     // Get pending submissions (assignments that have been submitted but not graded)

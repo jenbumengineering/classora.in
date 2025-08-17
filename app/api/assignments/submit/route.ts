@@ -116,21 +116,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if student has already submitted
-    const existingSubmission = await prisma.assignmentSubmission.findFirst({
-      where: {
-        assignmentId: assignmentId,
-        studentId: studentId
-      }
-    })
-
-    if (existingSubmission) {
-      return NextResponse.json(
-        { error: 'You have already submitted this assignment' },
-        { status: 400 }
-      )
-    }
-
     // Check if assignment is past due date
     if (assignment.dueDate && new Date() > new Date(assignment.dueDate)) {
       return NextResponse.json(
@@ -156,15 +141,40 @@ export async function POST(request: NextRequest) {
     await writeFile(filePath, buffer)
     const fileUrl = `/uploads/assignments/${fileName}`
 
-    // Create submission record
-    const submission = await prisma.assignmentSubmission.create({
-      data: {
+    // Check if student has already submitted (for resubmission handling)
+    const existingSubmission = await prisma.assignmentSubmission.findFirst({
+      where: {
         assignmentId: assignmentId,
-        studentId: studentId,
-        fileUrl: fileUrl,
-        feedback: feedback || null
+        studentId: studentId
       }
     })
+
+    let submission
+
+    if (existingSubmission) {
+      // Update existing submission (resubmission)
+      submission = await prisma.assignmentSubmission.update({
+        where: { id: existingSubmission.id },
+        data: {
+          fileUrl: fileUrl,
+          feedback: feedback || null,
+          submittedAt: new Date(), // Update submission time
+          grade: null, // Reset grade for new submission
+          gradedAt: null,
+          gradedBy: null
+        }
+      })
+    } else {
+      // Create new submission
+      submission = await prisma.assignmentSubmission.create({
+        data: {
+          assignmentId: assignmentId,
+          studentId: studentId,
+          fileUrl: fileUrl,
+          feedback: feedback || null
+        }
+      })
+    }
 
     // Get professor information for email
     const professor = await prisma.user.findUnique({
@@ -178,11 +188,12 @@ export async function POST(request: NextRequest) {
 
     // Send notification to professor
     try {
+      const isResubmission = existingSubmission ? 'resubmitted' : 'submitted'
       await prisma.notification.create({
         data: {
           userId: assignment.professorId,
-          title: 'New Assignment Submission',
-          message: `${student.name} has submitted assignment "${assignment.title}"`,
+          title: 'Assignment Submission',
+          message: `${student.name} has ${isResubmission} assignment "${assignment.title}"`,
           type: 'assignment'
         }
       })
@@ -213,7 +224,8 @@ export async function POST(request: NextRequest) {
       success: true,
       submissionId: submission.id,
       fileUrl: fileUrl,
-      submittedAt: submission.submittedAt
+      submittedAt: submission.submittedAt,
+      isResubmission: !!existingSubmission
     })
 
   } catch (error) {

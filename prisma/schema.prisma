@@ -105,6 +105,7 @@ model Class {
   isPrivate   Boolean   @default(false)
   isArchived  Boolean   @default(false)
   archivedAt  DateTime?
+  gradientColor String? @default("from-gray-900 to-black")
   professor   User      @relation(fields: [professorId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -160,7 +161,6 @@ model Quiz {
   type        String
   status      String    @default("DRAFT")
   timeLimit   Int?          // in minutes
-  maxAttempts Int           @default(1)
   classId     String
   professorId String
   noteId      String?

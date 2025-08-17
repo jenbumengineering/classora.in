@@ -121,7 +121,7 @@ export default function InviteStudentsPage() {
         } else if (successCount > 0 && alreadyInvitedCount > 0 && errorCount === 0) {
           toast.success(`✅ ${successCount} invitation${successCount > 1 ? 's' : ''} sent successfully! ${alreadyInvitedCount} already invited.`)
         } else if (successCount === 0 && alreadyInvitedCount > 0 && errorCount === 0) {
-          toast.info(`ℹ️ ${alreadyInvitedCount} email${alreadyInvitedCount > 1 ? 's' : ''} already invited. No new invitations sent.`)
+          toast.success(`ℹ️ ${alreadyInvitedCount} email${alreadyInvitedCount > 1 ? 's' : ''} already invited. No new invitations sent.`)
         } else if (errorCount > 0) {
           toast.error(`❌ ${errorCount} invitation${errorCount > 1 ? 's' : ''} failed. ${successCount} sent successfully. ${alreadyInvitedCount} already invited.`)
         } else {

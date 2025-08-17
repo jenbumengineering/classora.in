@@ -264,19 +264,28 @@ export default function TakeQuizPage() {
       case 'TRUE_FALSE':
         return (
           <div className="space-y-3">
-            {question.options?.map((option, optionIndex) => (
-              <label key={option.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`question-${question.id}`}
-                  value={option.text}
-                  checked={currentAnswer?.selectedOptions?.includes(option.text) || false}
-                  onChange={() => handleOptionSelect(question.id, option.text)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-gray-900">{option.text}</span>
-              </label>
-            ))}
+            <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input
+                type="radio"
+                name={`question-${question.id}`}
+                value="true"
+                checked={currentAnswer?.selectedOptions?.includes('true') || false}
+                onChange={() => handleOptionSelect(question.id, 'true')}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-gray-900">True</span>
+            </label>
+            <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input
+                type="radio"
+                name={`question-${question.id}`}
+                value="false"
+                checked={currentAnswer?.selectedOptions?.includes('false') || false}
+                onChange={() => handleOptionSelect(question.id, 'false')}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-gray-900">False</span>
+            </label>
           </div>
         )
 
@@ -317,44 +326,6 @@ export default function TakeQuizPage() {
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Quiz Not Found</h2>
             <p className="text-gray-600 mb-6">The quiz you're looking for doesn't exist.</p>
-            <Button asChild>
-              <Link href="/dashboard/quizzes">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Quizzes
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Check if student has reached maximum attempts
-  if (attempts.length >= quiz.maxAttempts) {
-    return (
-      <div className="flex h-screen bg-gray-50">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Maximum Attempts Reached</h2>
-            <p className="text-gray-600 mb-6">
-              You have reached the maximum number of attempts ({quiz.maxAttempts}) for this quiz.
-            </p>
-            {attempts.length > 0 && (
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-2">Your Attempts:</h3>
-                <div className="space-y-2">
-                  {attempts.map((attempt, index) => (
-                    <div key={attempt.id} className="text-sm text-gray-600">
-                      Attempt {attempts.length - index}: {attempt.score || 0} points
-                      {attempt.timeSpent && ` (${Math.floor(attempt.timeSpent / 60)}:${(attempt.timeSpent % 60).toString().padStart(2, '0')})`}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-2 text-sm font-medium text-green-600">
-                  Best Score: {Math.max(...attempts.map(a => a.score || 0))} points
-                </div>
-              </div>
-            )}
             <Button asChild>
               <Link href="/dashboard/quizzes">
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -413,7 +384,7 @@ export default function TakeQuizPage() {
                 <div className="mt-4 flex items-center space-x-6 text-sm">
                   <div className="flex items-center space-x-2">
                     <span className="text-gray-500">Attempt:</span>
-                    <span className="font-medium text-blue-600">{currentAttemptNumber} of {quiz.maxAttempts}</span>
+                    <span className="font-medium text-blue-600">{currentAttemptNumber}</span>
                   </div>
                   {attempts.length > 0 && (
                     <div className="flex items-center space-x-2">
@@ -541,14 +512,6 @@ export default function TakeQuizPage() {
                     <div>
                       <span className="text-sm font-medium text-gray-700">Time Limit:</span>
                       <p className="text-sm text-gray-600">{quiz.timeLimit} minutes</p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Max Attempts:</span>
-                      <p className="text-sm text-gray-600">{quiz.maxAttempts}</p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Remaining Attempts:</span>
-                      <p className="text-sm text-gray-600">{Math.max(0, quiz.maxAttempts - attempts.length)}</p>
                     </div>
                   </CardContent>
                 </Card>

@@ -63,11 +63,23 @@ export async function GET(request: NextRequest) {
       classItem.assignments.flatMap(assignment => assignment.submissions)
     )
 
-    const totalGrades = [
-      ...allQuizAttempts.map(attempt => attempt.score || 0),
-      ...allAssignmentSubmissions.map(submission => submission.grade || 0)
-    ].filter(grade => grade > 0)
-
+    // Calculate best scores per quiz per student for more accurate average
+    const bestScoresByQuizAndStudent = new Map<string, number>()
+    
+    allQuizAttempts.forEach(attempt => {
+      const key = `${attempt.quizId}-${attempt.studentId}`
+      const currentBest = bestScoresByQuizAndStudent.get(key)
+      const attemptScore = attempt.score || 0
+      
+      if (currentBest === undefined || attemptScore > currentBest) {
+        bestScoresByQuizAndStudent.set(key, attemptScore)
+      }
+    })
+    
+    const bestQuizScores = Array.from(bestScoresByQuizAndStudent.values())
+    const assignmentGrades = allAssignmentSubmissions.map(submission => submission.grade || 0).filter(grade => grade > 0)
+    
+    const totalGrades = [...bestQuizScores, ...assignmentGrades]
     const averageGrade = totalGrades.length > 0 
       ? Math.round((totalGrades.reduce((sum, grade) => sum + grade, 0) / totalGrades.length) * 100) / 100
       : 0
@@ -156,8 +168,10 @@ export async function GET(request: NextRequest) {
       ? Math.round((activeStudents / totalStudents) * 100)
       : 0
 
-    const quizPerformance = totalQuizAttempts > 0 
-      ? Math.round((successfulQuizAttempts / totalQuizAttempts) * 100)
+    // Calculate quiz performance based on best scores per quiz per student
+    const successfulBestScores = bestQuizScores.filter(score => score >= 70).length
+    const quizPerformance = bestQuizScores.length > 0 
+      ? Math.round((successfulBestScores / bestQuizScores.length) * 100)
       : 0
 
     // Calculate content consumption per student

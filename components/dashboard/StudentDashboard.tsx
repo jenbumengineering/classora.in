@@ -30,6 +30,10 @@ interface EnrolledClass {
     name: string
     code: string
     description?: string
+    isPrivate: boolean
+    isArchived: boolean
+    archivedAt?: string
+    createdAt: string
     professor: {
       id: string
       name: string
@@ -105,6 +109,7 @@ export function StudentDashboard() {
         headers: {
           'x-user-id': user.id,
         },
+        cache: 'no-store' // Force fresh data
       })
       if (response.ok) {
         const data = await response.json()
@@ -154,53 +159,53 @@ export function StudentDashboard() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Enrolled Classes</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-blue-800">Enrolled Classes</CardTitle>
+                  <BookOpen className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.enrolledClasses}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-blue-900">{stats.enrolledClasses}</div>
+                  <p className="text-xs text-blue-700">
                     Active classes
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-to-br from-purple-50 to-pink-100 border-purple-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Quiz Progress</CardTitle>
-                  <Code className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-purple-800">Quiz Progress</CardTitle>
+                  <Code className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.completedQuizzes}/{stats.totalQuizzes}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-purple-900">{stats.completedQuizzes}/{stats.totalQuizzes}</div>
+                  <p className="text-xs text-purple-700">
                     {Math.round((stats.completedQuizzes / stats.totalQuizzes) * 100)}% completed
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-green-800">Average Score</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.averageScore}%</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-green-900">{stats.averageScore}%</div>
+                  <p className="text-xs text-green-700">
                     Across all quizzes
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-to-br from-orange-50 to-red-100 border-orange-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Upcoming Deadlines</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-orange-800">Upcoming Deadlines</CardTitle>
+                  <Clock className="h-4 w-4 text-orange-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.upcomingDeadlines}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-orange-900">{stats.upcomingDeadlines}</div>
+                  <p className="text-xs text-orange-700">
                     Next 7 days
                   </p>
                 </CardContent>
@@ -265,7 +270,7 @@ export function StudentDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
                       {upcomingDeadlines.map((deadline) => (
                         <div key={deadline.id} className="flex items-start space-x-3">
                           <div className="flex-shrink-0">
@@ -302,7 +307,7 @@ export function StudentDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
                   {recentActivity.map((activity) => (
                     <div key={activity.id} className="flex items-center space-x-3">
                       <div className="flex-shrink-0">

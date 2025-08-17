@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   description: 'A comprehensive educational platform for professors and students with notes, quizzes, and assignments.',
   keywords: ['education', 'learning', 'quizzes', 'assignments', 'practice'],
   authors: [{ name: 'Classora.in Team' }],
-  viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
   icons: {
     icon: [
@@ -32,6 +31,11 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/site.webmanifest',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({

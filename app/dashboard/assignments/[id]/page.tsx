@@ -139,13 +139,14 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
 
       if (response.ok) {
         const data = await response.json()
-        toast.success('Assignment submitted successfully!')
+        const isResubmission = data.isResubmission
+        toast.success(isResubmission ? 'Assignment resubmitted successfully!' : 'Assignment submitted successfully!')
         setSubmission({
           id: data.submissionId,
           fileUrl: data.fileUrl,
           feedback: feedback.trim() || null,
           submittedAt: data.submittedAt,
-          grade: null,
+          grade: null, // Reset grade for resubmission
           gradedAt: null
         })
         setSelectedFile(null)
@@ -173,7 +174,6 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
   const canSubmit = () => {
     if (!assignment || user?.role !== 'STUDENT') return false
     if (assignment.status !== 'PUBLISHED') return false
-    if (submission) return false // Already submitted
     if (isAssignmentOverdue()) return false
     return true
   }
@@ -403,6 +403,75 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
                                   Graded on: {new Date(submission.gradedAt).toLocaleDateString()}
                                 </span>
                               )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Resubmission Section */}
+                        {canSubmit() && (
+                          <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <div className="flex items-center space-x-2 text-yellow-700 mb-3">
+                              <Upload className="w-5 h-5" />
+                              <span className="font-medium">Resubmit Assignment</span>
+                            </div>
+                            <p className="text-sm text-yellow-700 mb-4">
+                              You can resubmit this assignment. Your previous submission will be replaced.
+                            </p>
+                            
+                            {/* File Upload for Resubmission */}
+                            <div className="space-y-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  New Assignment File *
+                                </label>
+                                <input
+                                  ref={fileInputRef}
+                                  type="file"
+                                  onChange={handleFileSelect}
+                                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  disabled={isSubmitting}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Allowed formats: PDF, DOC, DOCX, TXT, JPG, PNG, GIF (Max 50MB)
+                                </p>
+                              </div>
+
+                              {/* Feedback for Resubmission */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Additional Feedback (Optional)
+                                </label>
+                                <textarea
+                                  value={feedback}
+                                  onChange={(e) => setFeedback(e.target.value)}
+                                  placeholder="Add any comments or feedback about your resubmission..."
+                                  rows={3}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  disabled={isSubmitting}
+                                />
+                              </div>
+
+                              {/* Resubmit Button */}
+                              <div className="flex justify-end">
+                                <Button
+                                  onClick={handleSubmit}
+                                  disabled={!selectedFile || isSubmitting}
+                                  className="flex items-center space-x-2 bg-yellow-600 hover:bg-yellow-700"
+                                >
+                                  {isSubmitting ? (
+                                    <>
+                                      <LoadingSpinner size="sm" />
+                                      <span>Resubmitting...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Upload className="w-4 h-4" />
+                                      <span>Resubmit Assignment</span>
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         )}

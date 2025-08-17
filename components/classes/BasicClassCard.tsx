@@ -16,6 +16,7 @@ interface BasicClassCardProps {
     isPrivate: boolean
     isArchived: boolean
     archivedAt?: string
+    gradientColor?: string
     createdAt: string
     professor: {
       id: string
@@ -41,6 +42,9 @@ interface BasicClassCardProps {
 export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpdate }: BasicClassCardProps) {
   const { user } = useAuth()
   const [isUpdating, setIsUpdating] = useState(false)
+
+  // Use the stored gradient color or fallback to default
+  const selectedGradient = classData.gradientColor || 'from-gray-900 to-black'
 
   const handleArchiveToggle = async () => {
     if (!user || user.role !== 'PROFESSOR') return
@@ -103,44 +107,70 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
   const isProfessor = user?.role === 'PROFESSOR' && user?.id === classData.professor.id
 
   return (
-    <div className={`border rounded-lg p-6 bg-white hover:shadow-lg transition-shadow ${
-      classData.isArchived ? 'opacity-75 bg-gray-50' : ''
+    <div className={`border rounded-lg hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden ${
+      classData.isArchived 
+        ? 'opacity-75 bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200' 
+        : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200'
     }`}>
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h3 className="text-xl font-bold text-gray-900 mb-2">{classData.name}</h3>
-          <p className="text-sm text-gray-600 mb-1">{classData.code}</p>
-          <p className="text-sm text-gray-500">by {classData.professor.name}</p>
+      {/* Main Content Container with Dark Gradient */}
+      <div className={`bg-gradient-to-br ${selectedGradient} p-4 mb-4 text-white rounded-b-lg`}>
+        {/* Class Info Section */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-white mb-2">{classData.name}</h3>
+            <p className="text-sm text-blue-200 mb-1 font-medium">{classData.code}</p>
+            <p className="text-sm text-blue-100">by {classData.professor.name}</p>
+          </div>
+          <div className="flex items-center space-x-2 ml-4">
+            {classData.isPrivate && (
+              <Lock className="w-4 h-4 text-purple-300" />
+            )}
+            {classData.isArchived && (
+              <Archive className="w-4 h-4 text-gray-300" />
+            )}
+          </div>
         </div>
-        <div className="flex items-center space-x-2 ml-4">
-          {classData.isPrivate && (
-            <Lock className="w-4 h-4 text-gray-500" title="Private Class" />
-          )}
-          {classData.isArchived && (
-            <Archive className="w-4 h-4 text-gray-500" title="Archived Class" />
-          )}
+        
+        {classData.description && (
+          <p className="text-blue-100 text-sm mb-4 line-clamp-2">{classData.description}</p>
+        )}
+
+        {/* Statistics Section with Light Gradient Border */}
+        <div className="bg-white/10 rounded-lg p-3 border border-gradient-to-r from-blue-300 to-indigo-300">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center text-white font-semibold text-sm">
+                <Users className="w-4 h-4 mr-1 text-blue-200" />
+                <span className="text-lg font-bold">{classData._count.enrollments}</span>
+              </div>
+              <span className="text-xs text-blue-200 mt-1">Students</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="text-white font-semibold text-sm">
+                <span className="text-lg font-bold">{classData._count.notes}</span>
+              </div>
+              <span className="text-xs text-blue-200 mt-1">Notes</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="text-white font-semibold text-sm">
+                <span className="text-lg font-bold">{classData._count.quizzes}</span>
+              </div>
+              <span className="text-xs text-blue-200 mt-1">Quizzes</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="text-white font-semibold text-sm">
+                <span className="text-lg font-bold">{classData._count.assignments}</span>
+              </div>
+              <span className="text-xs text-blue-200 mt-1">Assignments</span>
+            </div>
+          </div>
         </div>
       </div>
-      
-      {classData.description && (
-        <p className="text-gray-700 text-sm mb-4 line-clamp-2">{classData.description}</p>
-      )}
 
-      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-        <div className="flex items-center space-x-4">
-          <span className="flex items-center">
-            <Users className="w-4 h-4 mr-1" />
-            {classData._count.enrollments} students
-          </span>
-          <span>{classData._count.notes} notes</span>
-          <span>{classData._count.quizzes} quizzes</span>
-          <span>{classData._count.assignments} assignments</span>
-        </div>
-      </div>
-
-      <div className="flex space-x-2">
+      {/* Action Buttons at Bottom */}
+      <div className="flex space-x-2 p-6 pt-0">
         <Link href={`/classes/${classData.id}`} className="flex-1">
-          <Button className="w-full" variant="outline">
+          <Button className={`w-full bg-gradient-to-r ${selectedGradient} hover:opacity-90 text-white border-0`} variant="outline">
             <Eye className="w-4 h-4 mr-2" />
             View Class
           </Button>
@@ -154,6 +184,7 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
               variant="outline"
               size="sm"
               title={classData.isPrivate ? 'Make Public' : 'Make Private'}
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
             >
               <Lock className="w-4 h-4" />
             </Button>
@@ -163,6 +194,7 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
               variant="outline"
               size="sm"
               title={classData.isArchived ? 'Unarchive' : 'Archive'}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               <Archive className="w-4 h-4" />
             </Button>
@@ -173,7 +205,7 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
           <Button
             onClick={() => onEnroll(classData.id)}
             size="sm"
-            className="flex-1"
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700"
           >
             Enroll
           </Button>

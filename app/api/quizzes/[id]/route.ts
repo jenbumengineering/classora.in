@@ -7,7 +7,6 @@ const updateQuizSchema = z.object({
   title: z.string().min(1, 'Title is required').optional(),
   description: z.string().optional(),
   timeLimit: z.number().min(1).max(180).optional(),
-  maxAttempts: z.number().min(1).max(10).optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).optional(),
   questions: z.array(z.object({
     id: z.string().optional(), // For existing questions
@@ -119,7 +118,6 @@ export async function PUT(
           title: validatedData.title,
           description: validatedData.description,
           timeLimit: validatedData.timeLimit,
-          maxAttempts: validatedData.maxAttempts,
           status: validatedData.status,
         }
       })

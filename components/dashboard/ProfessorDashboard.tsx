@@ -26,7 +26,19 @@ interface ProfessorClass {
   name: string
   code: string
   description?: string
+  isPrivate: boolean
+  isArchived: boolean
+  archivedAt?: string
   createdAt: string
+  professor: {
+    id: string
+    name: string
+    email: string
+    teacherProfile?: {
+      university?: string
+      department?: string
+    }
+  }
   _count: {
     enrollments: number
     notes: number
@@ -145,53 +157,53 @@ export function ProfessorDashboard() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-blue-800">Total Classes</CardTitle>
+                  <BookOpen className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalClasses}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-blue-900">{stats.totalClasses}</div>
+                  <p className="text-xs text-blue-700">
                     Active classes
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-to-br from-purple-50 to-pink-100 border-purple-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-purple-800">Total Students</CardTitle>
+                  <Users className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalStudents}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-purple-900">{stats.totalStudents}</div>
+                  <p className="text-xs text-purple-700">
                     Enrolled students
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-green-800">Average Score</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.averageScore}%</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-green-900">{stats.averageScore}%</div>
+                  <p className="text-xs text-green-700">
                     Across all quizzes
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-gradient-to-br from-orange-50 to-red-100 border-orange-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-orange-800">Pending Reviews</CardTitle>
+                  <Clock className="h-4 w-4 text-orange-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.pendingSubmissions}</div>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-2xl font-bold text-orange-900">{stats.pendingSubmissions}</div>
+                  <p className="text-xs text-orange-700">
                     Need grading
                   </p>
                 </CardContent>
@@ -245,7 +257,7 @@ export function ProfessorDashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
                     {recentActivity.map((activity) => (
                       <div key={activity.id} className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
