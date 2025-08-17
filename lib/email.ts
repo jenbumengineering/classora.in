@@ -76,7 +76,7 @@ export const emailTemplates = {
         </div>
         
         <p>If you have any further questions, please don't hesitate to contact us again.</p>
-        <p>Best regards,<br><strong>${data.adminName}</strong><br>Classora.in Support Team</p>
+        <p>Best regards,<br><strong>${data.adminName}</strong><br>Founder | Classora</p>
         
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
         <p style="color: #6b7280; font-size: 12px;">
