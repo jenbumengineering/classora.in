@@ -1,0 +1,39 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          # Navigate to project directory
+          cd /vps-projects/classora
+          
+          # Pull latest changes
+          git pull origin main
+          
+          # Stop and remove existing containers
+          docker-compose down
+          
+          # Build and start new containers
+          docker-compose build --no-cache
+          docker-compose up -d
+          
+          # Clean up unused Docker resources
+          docker system prune -f
+          
+          # Check if containers are running
+          docker-compose ps
+          
+          echo "Deployment completed successfully!"
