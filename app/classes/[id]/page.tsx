@@ -60,6 +60,7 @@ interface Quiz {
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED'
   timeLimit?: number
   totalQuestions: number
+  noteId?: string
   createdAt: string
   updatedAt: string
   class: {
@@ -81,6 +82,7 @@ interface Assignment {
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED'
   dueDate?: string
   category?: string
+  noteId?: string
   createdAt: string
   updatedAt: string
   class: {
@@ -441,48 +443,138 @@ export default function ClassPage() {
                     </div>
 
                     <div className="space-y-8">
-                      {/* Quizzes Section */}
-                      {quizzes.length > 0 && (
-                        <div>
-                          <div className="flex items-center mb-4">
-                            <Code className="w-5 h-5 text-orange-500 mr-2" />
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quizzes</h3>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {quizzes.map((quiz) => (
-                              <div key={quiz.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
-                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                  {quiz.title}
-                                </h4>
-                                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                  <p>{quiz.totalQuestions} Questions</p>
-                                  {quiz.timeLimit && (
-                                    <p>{quiz.timeLimit} Minutes</p>
-                                  )}
+                      {/* Notes Section - Vertically Stacked */}
+                      {notes.length > 0 ? (
+                        <div className="space-y-6">
+                          {notes.map((note) => (
+                            <div key={note.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+                              {/* Note Header */}
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center">
+                                  <BookOpen className="w-5 h-5 text-orange-500 mr-2" />
+                                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{note.title}</h3>
                                 </div>
-                                <div className="mt-3">
-                                  <Button asChild variant="outline" size="sm" className="w-full">
-                                    <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                                      View Quiz
+                                <div className="flex items-center space-x-4">
+                                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    {formatDate(note.createdAt)}
+                                  </span>
+                                  <Button asChild variant="outline" size="sm">
+                                    <Link href={`/dashboard/notes/${note.id}`}>
+                                      View Note
                                     </Link>
                                   </Button>
                                 </div>
                               </div>
-                            ))}
-                          </div>
+
+                              {/* Quizzes Section within Note */}
+                              {quizzes.filter(quiz => quiz.noteId === note.id).length > 0 && (
+                                <div className="mb-6">
+                                  <div className="flex items-center mb-3">
+                                    <Code className="w-4 h-4 text-orange-500 mr-2" />
+                                    <h4 className="text-md font-medium text-gray-900 dark:text-white">Quizzes</h4>
+                                  </div>
+                                  <div className="flex space-x-4 overflow-x-auto pb-2">
+                                    {quizzes.filter(quiz => quiz.noteId === note.id).map((quiz) => (
+                                      <div key={quiz.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
+                                        <h5 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                          {quiz.title}
+                                        </h5>
+                                        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                          <p>{quiz.totalQuestions} Questions</p>
+                                          {quiz.timeLimit && (
+                                            <p>{quiz.timeLimit} Minutes</p>
+                                          )}
+                                        </div>
+                                        <div className="mt-3">
+                                          <Button asChild variant="outline" size="sm" className="w-full">
+                                            <Link href={`/dashboard/quizzes/${quiz.id}`}>
+                                              View Quiz
+                                            </Link>
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Assignments Section within Note */}
+                              {assignments.filter(assignment => assignment.noteId === note.id).length > 0 && (
+                                <div>
+                                  <div className="flex items-center mb-3">
+                                    <List className="w-4 h-4 text-orange-500 mr-2" />
+                                    <h4 className="text-md font-medium text-gray-900 dark:text-white">Assignments</h4>
+                                  </div>
+                                  <div className="flex space-x-4 overflow-x-auto pb-2">
+                                    {assignments.filter(assignment => assignment.noteId === note.id).map((assignment) => (
+                                      <div key={assignment.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
+                                        <h5 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                          {assignment.title}
+                                        </h5>
+                                        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                          {assignment.dueDate && (
+                                            <p>Due date {formatDate(assignment.dueDate)}</p>
+                                          )}
+                                        </div>
+                                        <div className="mt-3">
+                                          <Button asChild variant="outline" size="sm" className="w-full">
+                                            <Link href={`/dashboard/assignments/${assignment.id}`}>
+                                              View Assignment
+                                            </Link>
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
+                      ) : (
+                        /* Standalone Quizzes Section (if no notes) */
+                        quizzes.length > 0 && (
+                          <div>
+                            <div className="flex items-center mb-4">
+                              <Code className="w-5 h-5 text-orange-500 mr-2" />
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quizzes</h3>
+                            </div>
+                            <div className="flex space-x-4 overflow-x-auto pb-2">
+                              {quizzes.map((quiz) => (
+                                <div key={quiz.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
+                                  <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                    {quiz.title}
+                                  </h4>
+                                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                    <p>{quiz.totalQuestions} Questions</p>
+                                    {quiz.timeLimit && (
+                                      <p>{quiz.timeLimit} Minutes</p>
+                                    )}
+                                  </div>
+                                  <div className="mt-3">
+                                    <Button asChild variant="outline" size="sm" className="w-full">
+                                      <Link href={`/dashboard/quizzes/${quiz.id}`}>
+                                        View Quiz
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
                       )}
 
-                      {/* Assignments Section */}
-                      {assignments.length > 0 && (
+                      {/* Standalone Assignments Section (if no notes) */}
+                      {notes.length === 0 && assignments.length > 0 && (
                         <div>
                           <div className="flex items-center mb-4">
                             <List className="w-5 h-5 text-orange-500 mr-2" />
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Assignments</h3>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          <div className="flex space-x-4 overflow-x-auto pb-2">
                             {assignments.map((assignment) => (
-                              <div key={assignment.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
+                              <div key={assignment.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
                                 <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
                                   {assignment.title}
                                 </h4>
@@ -495,35 +587,6 @@ export default function ClassPage() {
                                   <Button asChild variant="outline" size="sm" className="w-full">
                                     <Link href={`/dashboard/assignments/${assignment.id}`}>
                                       View Assignment
-                                    </Link>
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Notes Section */}
-                      {notes.length > 0 && (
-                        <div>
-                          <div className="flex items-center mb-4">
-                            <BookOpen className="w-5 h-5 text-orange-500 mr-2" />
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notes</h3>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {notes.map((note) => (
-                              <div key={note.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
-                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                  {note.title}
-                                </h4>
-                                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                  <p>{formatDate(note.createdAt)}</p>
-                                </div>
-                                <div className="mt-3">
-                                  <Button asChild variant="outline" size="sm" className="w-full">
-                                    <Link href={`/dashboard/notes/${note.id}`}>
-                                      View Note
                                     </Link>
                                   </Button>
                                 </div>
