@@ -53,11 +53,65 @@ export async function GET(
           where: { status: 'PUBLISHED' },
           orderBy: { createdAt: 'desc' },
           take: 5,
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            status: true,
+            timeLimit: true,
+            noteId: true,
+            createdAt: true,
+            updatedAt: true,
+            class: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+              }
+            },
+            professor: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            },
+            questions: {
+              select: {
+                id: true,
+              }
+            }
+          }
         },
         assignments: {
           where: { status: 'PUBLISHED' },
           orderBy: { createdAt: 'desc' },
           take: 5,
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            status: true,
+            dueDate: true,
+            category: true,
+            noteId: true,
+            createdAt: true,
+            updatedAt: true,
+            class: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+              }
+            },
+            professor: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            }
+          }
         },
         enrollments: {
           include: {
