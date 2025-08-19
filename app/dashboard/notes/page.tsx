@@ -187,7 +187,7 @@ export default function NotesPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="mb-4">
+                  <div className="mb-4 line-clamp-5">
                     <RichTextRenderer content={note.content} />
                   </div>
                   <div className="flex justify-between items-center">

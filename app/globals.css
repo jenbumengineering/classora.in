@@ -106,6 +106,13 @@
     overflow: hidden;
   }
 
+  .line-clamp-5 {
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   .btn-primary {
     @apply bg-orange-500 text-white hover:bg-orange-600 focus-visible:ring-orange-500;
   }
