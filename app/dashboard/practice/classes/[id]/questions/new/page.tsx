@@ -126,8 +126,16 @@ export default function CreatePracticeQuestionPage() {
           }
         }
         
-        // Clear options when switching to other question types
-        if (updates.type === 'TRUE_FALSE' || updates.type === 'SHORT_ANSWER') {
+        // Initialize TRUE_FALSE questions with True/False options
+        if (updates.type === 'TRUE_FALSE') {
+          updatedQuestion.options = [
+            { text: 'True', isCorrect: false, explanation: '' },
+            { text: 'False', isCorrect: false, explanation: '' }
+          ]
+        }
+        
+        // Clear options when switching to SHORT_ANSWER
+        if (updates.type === 'SHORT_ANSWER') {
           updatedQuestion.options = undefined
         }
         
@@ -140,6 +148,11 @@ export default function CreatePracticeQuestionPage() {
   const addOption = (questionId: string) => {
     setQuestions(questions.map(q => {
       if (q.id === questionId && q.options) {
+        // Don't allow adding options to TRUE_FALSE questions
+        if (q.type === 'TRUE_FALSE') {
+          return q
+        }
+        
         return { 
           ...q, 
           options: [...q.options, { text: '', isCorrect: false, explanation: '' }] 
@@ -152,6 +165,11 @@ export default function CreatePracticeQuestionPage() {
   const removeOption = (questionId: string, optionIndex: number) => {
     setQuestions(questions.map(q => {
       if (q.id === questionId && q.options) {
+        // Don't allow removing options from TRUE_FALSE questions
+        if (q.type === 'TRUE_FALSE') {
+          return q
+        }
+        
         const newOptions = q.options.filter((_, index) => index !== optionIndex)
         // Ensure we always have at least 2 options
         if (newOptions.length < 2) {
@@ -166,6 +184,11 @@ export default function CreatePracticeQuestionPage() {
   const updateOption = (questionId: string, optionIndex: number, field: keyof QuestionOption, value: string | boolean) => {
     setQuestions(questions.map(q => {
       if (q.id === questionId && q.options) {
+        // Don't allow editing text of TRUE_FALSE options
+        if (q.type === 'TRUE_FALSE' && field === 'text') {
+          return q
+        }
+        
         const newOptions = [...q.options]
         newOptions[optionIndex] = { ...newOptions[optionIndex], [field]: value }
         return { ...q, options: newOptions }
@@ -245,7 +268,7 @@ export default function CreatePracticeQuestionPage() {
         return
       }
 
-      if (['MULTIPLE_CHOICE', 'MULTIPLE_SELECTION', 'TRUE_FALSE'].includes(question.type)) {
+      if (['MULTIPLE_CHOICE', 'MULTIPLE_SELECTION'].includes(question.type)) {
         if (!question.options || question.options.length < 2) {
           toast.error(`Question ${questionNumber}: Multiple choice/selection questions must have at least 2 options`)
           return
@@ -265,6 +288,24 @@ export default function CreatePracticeQuestionPage() {
 
         if (question.type === 'MULTIPLE_CHOICE' && correctOptions.length > 1) {
           toast.error(`Question ${questionNumber}: Multiple choice questions can only have one correct answer`)
+          return
+        }
+      }
+
+      if (question.type === 'TRUE_FALSE') {
+        if (!question.options || question.options.length !== 2) {
+          toast.error(`Question ${questionNumber}: True/False questions must have exactly 2 options (True and False)`)
+          return
+        }
+
+        const correctOptions = question.options.filter(opt => opt.isCorrect)
+        if (correctOptions.length === 0) {
+          toast.error(`Question ${questionNumber}: Please select the correct answer (True or False)`)
+          return
+        }
+
+        if (correctOptions.length > 1) {
+          toast.error(`Question ${questionNumber}: True/False questions can only have one correct answer`)
           return
         }
       }
@@ -565,8 +606,8 @@ export default function CreatePracticeQuestionPage() {
                             />
                           </div>
 
-                          {/* Options for Multiple Choice/Selection/True-False */}
-                          {['MULTIPLE_CHOICE', 'MULTIPLE_SELECTION', 'TRUE_FALSE'].includes(question.type) && question.options && (
+                          {/* Options for Multiple Choice/Selection */}
+                          {['MULTIPLE_CHOICE', 'MULTIPLE_SELECTION'].includes(question.type) && question.options && (
                             <div>
                               <div className="flex items-center justify-between mb-4">
                                 <label className="block text-sm font-medium text-gray-700">
@@ -642,6 +683,46 @@ export default function CreatePracticeQuestionPage() {
                                         </Button>
                                       )}
                                     </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* True/False Options */}
+                          {question.type === 'TRUE_FALSE' && question.options && (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-4">
+                                Select the Correct Answer *
+                              </label>
+                              <div className="space-y-4">
+                                {question.options.map((option, optionIndex) => (
+                                  <div key={optionIndex} className="border rounded-lg p-4">
+                                    <div className="flex items-center space-x-3">
+                                      <input
+                                        type="radio"
+                                        name={`correct-${question.id}`}
+                                        checked={option.isCorrect}
+                                        onChange={(e) => updateOption(question.id, optionIndex, 'isCorrect', e.target.checked)}
+                                        className="mr-2"
+                                      />
+                                      <span className="text-lg font-medium text-gray-700">{option.text}</span>
+                                    </div>
+                                    
+                                    {option.isCorrect && (
+                                      <div className="mt-3">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                          Explanation (Optional)
+                                        </label>
+                                        <textarea
+                                          value={option.explanation}
+                                          onChange={(e) => updateOption(question.id, optionIndex, 'explanation', e.target.value)}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                          placeholder="Explain why this answer is correct..."
+                                          rows={3}
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
