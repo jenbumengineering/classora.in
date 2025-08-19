@@ -26,6 +26,8 @@ import {
   Award,
   Clock,
   User,
+  ChevronDown,
+  ChevronUp,
   Code,
   List
 } from 'lucide-react'
@@ -144,8 +146,21 @@ export default function ClassPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isEnrolled, setIsEnrolled] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('overview')
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set())
 
   const classId = params.id as string
+
+  const toggleNoteExpansion = (noteId: string) => {
+    setExpandedNotes(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(noteId)) {
+        newSet.delete(noteId)
+      } else {
+        newSet.add(noteId)
+      }
+      return newSet
+    })
+  }
 
   useEffect(() => {
     if (classId) {
@@ -431,205 +446,141 @@ export default function ClassPage() {
                 {activeTab === 'curriculum' && (
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Class Curriculum</h2>
-                    
-                    {/* Header with counts */}
-                    <div className="mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        {classData.name}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {classData._count.quizzes} Quizzes • {classData._count.assignments} Assignments
-                      </p>
-                    </div>
-
-                    <div className="space-y-8">
-                      {/* Notes Section - Vertically Stacked */}
-                      {notes.length > 0 ? (
-                        <div className="space-y-6">
-                          {notes.map((note) => (
-                            <div key={note.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
-                              {/* Note Header */}
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center">
-                                  <BookOpen className="w-5 h-5 text-orange-500 mr-2" />
-                                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{note.title}</h3>
-                                </div>
-                                <div className="flex items-center space-x-4">
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    {formatDate(note.createdAt)}
-                                  </span>
-                                  <Button asChild variant="outline" size="sm">
-                                    <Link href={`/dashboard/notes/${note.id}`}>
-                                      View Note
-                                    </Link>
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {/* Quizzes Section within Note */}
-                              {quizzes.filter(quiz => quiz.noteId === note.id).length > 0 && (
-                                <div className="mb-6">
-                                  <div className="flex items-center mb-3">
-                                    <Code className="w-4 h-4 text-orange-500 mr-2" />
-                                    <h4 className="text-md font-medium text-gray-900 dark:text-white">Quizzes</h4>
-                                  </div>
-                                  <div className="flex space-x-4 overflow-x-auto pb-2">
-                                    {quizzes.filter(quiz => quiz.noteId === note.id).map((quiz) => (
-                                      <div key={quiz.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
-                                        <h5 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                          {quiz.title}
-                                        </h5>
-                                        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                          <p>{(quiz as any).questions?.length || 0} Questions</p>
-                                          {quiz.timeLimit && (
-                                            <p>{quiz.timeLimit} Minutes</p>
-                                          )}
-                                        </div>
-                                        <div className="mt-3">
-                                          <Button asChild variant="outline" size="sm" className="w-full">
-                                            <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                                              View Quiz
-                                            </Link>
-                                          </Button>
-                                        </div>
+                    <div className="space-y-6">
+                      {/* Notes Section */}
+                      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                        <CardHeader>
+                          <CardTitle className="text-gray-900 dark:text-white">Notes</CardTitle>
+                          <CardDescription className="text-gray-600 dark:text-gray-400">
+                            {classData._count.quizzes} quizzes • {classData._count.assignments} assignments
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {notes.length > 0 ? (
+                            <div className="space-y-3">
+                              {notes.map((note) => {
+                                const noteQuizzes = quizzes.filter(quiz => quiz.noteId === note.id)
+                                const noteAssignments = assignments.filter(assignment => assignment.noteId === note.id)
+                                const isExpanded = expandedNotes.has(note.id)
+                                
+                                return (
+                                  <div key={note.id} className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                                    {/* Note Header - Always Visible */}
+                                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-4">
+                                      <div className="flex items-center">
+                                        <BookOpen className="w-5 h-5 text-orange-500 mr-3" />
+                                        <span className="text-gray-900 dark:text-gray-300 font-medium">{note.title}</span>
                                       </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Assignments Section within Note */}
-                              {assignments.filter(assignment => assignment.noteId === note.id).length > 0 && (
-                                <div>
-                                  <div className="flex items-center mb-3">
-                                    <List className="w-4 h-4 text-orange-500 mr-2" />
-                                    <h4 className="text-md font-medium text-gray-900 dark:text-white">Assignments</h4>
-                                  </div>
-                                  <div className="flex space-x-4 overflow-x-auto pb-2">
-                                    {assignments.filter(assignment => assignment.noteId === note.id).map((assignment) => (
-                                      <div key={assignment.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
-                                        <h5 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                          {assignment.title}
-                                        </h5>
-                                        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                          {assignment.dueDate && (
-                                            <p>Due date {formatDate(assignment.dueDate)}</p>
+                                      <div className="flex items-center space-x-4">
+                                        <span className="text-gray-500 dark:text-gray-400 text-sm">
+                                          {formatDate(note.createdAt)}
+                                        </span>
+                                        <Button asChild variant="outline" size="sm">
+                                          <Link href={`/dashboard/notes/${note.id}`}>
+                                            View Note
+                                          </Link>
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => toggleNoteExpansion(note.id)}
+                                          className="p-1"
+                                        >
+                                          {isExpanded ? (
+                                            <ChevronUp className="w-4 h-4 text-gray-500" />
+                                          ) : (
+                                            <ChevronDown className="w-4 h-4 text-gray-500" />
                                           )}
-                                        </div>
-                                        <div className="mt-3">
-                                          <Button asChild variant="outline" size="sm" className="w-full">
-                                            <Link href={`/dashboard/assignments/${assignment.id}`}>
-                                              View Assignment
-                                            </Link>
-                                          </Button>
-                                        </div>
+                                        </Button>
                                       </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        /* Standalone Quizzes Section (if no notes) */
-                        quizzes.length > 0 && (
-                          <div>
-                            <div className="flex items-center mb-4">
-                              <Code className="w-5 h-5 text-orange-500 mr-2" />
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quizzes</h3>
-                            </div>
-                            <div className="flex space-x-4 overflow-x-auto pb-2">
-                              {quizzes.map((quiz) => (
-                                <div key={quiz.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
-                                  <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                    {quiz.title}
-                                  </h4>
-                                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                    <p>{(quiz as any).questions?.length || 0} Questions</p>
-                                    {quiz.timeLimit && (
-                                      <p>{quiz.timeLimit} Minutes</p>
+                                    </div>
+
+                                    {/* Expanded Content */}
+                                    {isExpanded && (
+                                      <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600">
+                                        {/* Quizzes Section */}
+                                        {noteQuizzes.length > 0 && (
+                                          <div className="mb-6">
+                                            <div className="flex items-center mb-3">
+                                              <Code className="w-4 h-4 text-orange-500 mr-2" />
+                                              <h4 className="text-md font-medium text-gray-900 dark:text-white">Quizzes</h4>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                              {noteQuizzes.map((quiz) => (
+                                                <div key={quiz.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-3 bg-orange-50 dark:bg-orange-900/20 hover:shadow-md transition-shadow">
+                                                  <h5 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                                    {quiz.title}
+                                                  </h5>
+                                                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                                    <p>{quiz.totalQuestions} Questions</p>
+                                                    {quiz.timeLimit && (
+                                                      <p>{quiz.timeLimit} Minutes</p>
+                                                    )}
+                                                  </div>
+                                                  <Button asChild variant="outline" size="sm" className="w-full">
+                                                    <Link href={`/dashboard/quizzes/${quiz.id}`}>
+                                                      View Quiz
+                                                    </Link>
+                                                  </Button>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Assignments Section */}
+                                        {noteAssignments.length > 0 && (
+                                          <div>
+                                            <div className="flex items-center mb-3">
+                                              <List className="w-4 h-4 text-orange-500 mr-2" />
+                                              <h4 className="text-md font-medium text-gray-900 dark:text-white">Assignments</h4>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                              {noteAssignments.map((assignment) => (
+                                                <div key={assignment.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-3 bg-orange-50 dark:bg-orange-900/20 hover:shadow-md transition-shadow">
+                                                  <h5 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                                    {assignment.title}
+                                                  </h5>
+                                                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                                    {assignment.dueDate && (
+                                                      <p>Due date {formatDate(assignment.dueDate)}</p>
+                                                    )}
+                                                  </div>
+                                                  <Button asChild variant="outline" size="sm" className="w-full">
+                                                    <Link href={`/dashboard/assignments/${assignment.id}`}>
+                                                      View Assignment
+                                                    </Link>
+                                                  </Button>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Empty State if no quizzes or assignments */}
+                                        {noteQuizzes.length === 0 && noteAssignments.length === 0 && (
+                                          <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                                            <p>No quizzes or assignments linked to this note</p>
+                                          </div>
+                                        )}
+                                      </div>
                                     )}
                                   </div>
-                                  <div className="mt-3">
-                                    <Button asChild variant="outline" size="sm" className="w-full">
-                                      <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                                        View Quiz
-                                      </Link>
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
-                          </div>
-                        )
-                      )}
+                          ) : (
+                            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                              <BookOpen className="h-8 w-8 mx-auto mb-2" />
+                              <p>No notes available yet</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
 
-                      {/* Standalone Quizzes Section (quizzes not linked to any note) */}
-                      {quizzes.filter(quiz => !quiz.noteId).length > 0 && (
-                        <div>
-                          <div className="flex items-center mb-4">
-                            <Code className="w-5 h-5 text-orange-500 mr-2" />
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quizzes</h3>
-                          </div>
-                          <div className="flex space-x-4 overflow-x-auto pb-2">
-                            {quizzes.filter(quiz => !quiz.noteId).map((quiz) => (
-                              <div key={quiz.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
-                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                  {quiz.title}
-                                </h4>
-                                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                  <p>{(quiz as any).questions?.length || 0} Questions</p>
-                                  {quiz.timeLimit && (
-                                    <p>{quiz.timeLimit} Minutes</p>
-                                  )}
-                                </div>
-                                <div className="mt-3">
-                                  <Button asChild variant="outline" size="sm" className="w-full">
-                                    <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                                      View Quiz
-                                    </Link>
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
-                      {/* Standalone Assignments Section (assignments not linked to any note) */}
-                      {assignments.filter(assignment => !assignment.noteId).length > 0 && (
-                        <div>
-                          <div className="flex items-center mb-4">
-                            <List className="w-5 h-5 text-orange-500 mr-2" />
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Assignments</h3>
-                          </div>
-                          <div className="flex space-x-4 overflow-x-auto pb-2">
-                            {assignments.map((assignment) => (
-                              <div key={assignment.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
-                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                  {assignment.title}
-                                </h4>
-                                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                  {assignment.dueDate && (
-                                    <p>Due date {formatDate(assignment.dueDate)}</p>
-                                  )}
-                                </div>
-                                <div className="mt-3">
-                                  <Button asChild variant="outline" size="sm" className="w-full">
-                                    <Link href={`/dashboard/assignments/${assignment.id}`}>
-                                      View Assignment
-                                    </Link>
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
-                      {/* Empty State */}
-                      {quizzes.length === 0 && assignments.length === 0 && notes.length === 0 && (
+                      {notes.length === 0 && (
                         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                           <CardContent className="text-center py-8">
                             <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
