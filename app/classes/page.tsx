@@ -26,6 +26,7 @@ interface Class {
     id: string
     name: string
     email: string
+    avatar?: string
     teacherProfile?: {
       university?: string
       department?: string

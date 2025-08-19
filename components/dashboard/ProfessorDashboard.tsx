@@ -28,15 +28,16 @@ interface ProfessorClass {
   isArchived: boolean
   archivedAt?: string
   createdAt: string
-  professor: {
-    id: string
-    name: string
-    email: string
-    teacherProfile?: {
-      university?: string
-      department?: string
+      professor: {
+      id: string
+      name: string
+      email: string
+      avatar?: string
+      teacherProfile?: {
+        university?: string
+        department?: string
+      }
     }
-  }
   _count: {
     enrollments: number
     notes: number

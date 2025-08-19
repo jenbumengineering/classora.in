@@ -192,9 +192,12 @@ export default function ProfilePage() {
       })
 
       if (response.ok) {
-        const updatedProfile = await response.json()
+        const result = await response.json()
+        // Handle both response formats: { user: ... } and direct user object
+        const updatedProfile = result.user || result
         setProfile(updatedProfile)
         setIsEditing(false)
+        toast.success('Profile updated successfully!')
       } else {
         throw new Error('Failed to update profile')
       }
@@ -253,10 +256,10 @@ export default function ProfilePage() {
       })
 
       if (updateResponse.ok) {
+        const result = await updateResponse.json()
+        const updatedProfile = result.user || result
         setImagePreview(data.url)
-        if (profile) {
-          setProfile({ ...profile, avatar: data.url })
-        }
+        setProfile(updatedProfile)
         toast.success('Profile image updated successfully!')
       } else {
         throw new Error('Failed to update profile')

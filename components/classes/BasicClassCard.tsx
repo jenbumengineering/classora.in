@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { Lock, Archive, Eye, Users, User } from 'lucide-react'
+import { Avatar } from '@/lib/avatar'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
 
@@ -23,6 +24,7 @@ interface BasicClassCardProps {
       id: string
       name: string
       email: string
+      avatar?: string
       teacherProfile?: {
         university?: string
         department?: string
@@ -160,9 +162,12 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
 
         {/* Professor Info */}
         <div className="flex items-center mb-4">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
-            <User className="w-4 h-4 text-white" />
-          </div>
+          <Avatar 
+            src={classData.professor.avatar} 
+            alt={classData.professor.name} 
+            size="sm"
+            className="mr-3"
+          />
           <div>
             <p className="text-sm font-medium text-white">{classData.professor.name}</p>
             <p className="text-xs text-gray-400">Professor</p>
