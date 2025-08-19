@@ -16,25 +16,22 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const validatedData = assignmentQuerySchema.parse(Object.fromEntries(searchParams))
 
-    // Get user ID from request
+    // Get user ID from request (optional for public class view)
     const userId = request.headers.get('x-user-id')
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
+    let user = null
+    
+    if (userId) {
+      // Get user information if provided
+      user = await prisma.user.findUnique({
+        where: { id: userId }
+      })
 
-    // Get user information
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
+      if (!user) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        )
+      }
     }
 
     // Build the where clause for filtering
@@ -49,29 +46,32 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter assignments based on user role
-    if (user.role === 'PROFESSOR') {
-      // Professors see their own assignments
-      whereClause.professorId = userId
-    } else if (user.role === 'STUDENT') {
-      // Students see assignments from classes they are enrolled in
-      const enrollments = await prisma.enrollment.findMany({
-        where: { studentId: userId },
-        select: { classId: true }
-      })
-      
-      const enrolledClassIds = enrollments.map(e => e.classId)
-      if (enrolledClassIds.length === 0) {
-        // If student is not enrolled in any classes, return empty list
-        return NextResponse.json({
-          assignments: [],
-          total: 0,
-          limit: parseInt(validatedData.limit || '20'),
-          offset: parseInt(validatedData.offset || '0')
+    if (user) {
+      if (user.role === 'PROFESSOR') {
+        // Professors see their own assignments
+        whereClause.professorId = userId
+      } else if (user.role === 'STUDENT') {
+        // Students see assignments from classes they are enrolled in
+        const enrollments = await prisma.enrollment.findMany({
+          where: { studentId: userId! },
+          select: { classId: true }
         })
+        
+        const enrolledClassIds = enrollments.map(e => e.classId)
+        if (enrolledClassIds.length === 0) {
+          // If student is not enrolled in any classes, return empty list
+          return NextResponse.json({
+            assignments: [],
+            total: 0,
+            limit: parseInt(validatedData.limit || '20'),
+            offset: parseInt(validatedData.offset || '0')
+          })
+        }
+        
+        whereClause.classId = { in: enrolledClassIds }
       }
-      
-      whereClause.classId = { in: enrolledClassIds }
     }
+    // If no user (public access), only show published assignments for the specified class
 
     // Fetch assignments from database
     const assignments = await prisma.assignment.findMany({
