@@ -359,22 +359,22 @@ export default function ClassPage() {
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">What You'll Learn</h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-3">
-                          {notes.length > 0 && (
+                          {classData._count.notes > 0 && (
                             <div className="flex items-start">
                               <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                              <span className="text-gray-700 dark:text-gray-300">Access {notes.length} comprehensive learning materials and notes</span>
+                              <span className="text-gray-700 dark:text-gray-300">Access {classData._count.notes} comprehensive learning materials and notes</span>
                             </div>
                           )}
-                          {quizzes.length > 0 && (
+                          {classData._count.quizzes > 0 && (
                             <div className="flex items-start">
                               <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                              <span className="text-gray-700 dark:text-gray-300">Test your knowledge with {quizzes.length} interactive quizzes</span>
+                              <span className="text-gray-700 dark:text-gray-300">Test your knowledge with {classData._count.quizzes} interactive quizzes</span>
                             </div>
                           )}
-                          {assignments.length > 0 && (
+                          {classData._count.assignments > 0 && (
                             <div className="flex items-start">
                               <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                              <span className="text-gray-700 dark:text-gray-300">Complete {assignments.length} practical assignments</span>
+                              <span className="text-gray-700 dark:text-gray-300">Complete {classData._count.assignments} practical assignments</span>
                             </div>
                           )}
                         </div>
@@ -403,16 +403,16 @@ export default function ClassPage() {
                           <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                           <span>Enrollment in this class to access all materials</span>
                         </li>
-                        {quizzes.length > 0 && (
+                        {classData._count.quizzes > 0 && (
                           <li className="flex items-start">
                             <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                            <span>Commitment to complete {quizzes.length} quizzes for assessment</span>
+                            <span>Commitment to complete {classData._count.quizzes} quizzes for assessment</span>
                           </li>
                         )}
-                        {assignments.length > 0 && (
+                        {classData._count.assignments > 0 && (
                           <li className="flex items-start">
                             <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                            <span>Dedication to finish {assignments.length} assignments</span>
+                            <span>Dedication to finish {classData._count.assignments} assignments</span>
                           </li>
                         )}
                         <li className="flex items-start">
@@ -433,7 +433,7 @@ export default function ClassPage() {
                         <CardHeader>
                           <CardTitle className="text-gray-900 dark:text-white">Notes</CardTitle>
                           <CardDescription className="text-gray-600 dark:text-gray-400">
-                            {quizzes.length} quizzes • {assignments.length} assignments
+                            {classData._count.quizzes} quizzes • {classData._count.assignments} assignments
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -661,15 +661,15 @@ export default function ClassPage() {
                     <div className="space-y-4">
                       <div className="flex items-center">
                         <BookOpen className="w-5 h-5 text-orange-500 mr-3" />
-                        <span className="text-gray-700 dark:text-gray-300">{notes.length} learning materials</span>
+                        <span className="text-gray-700 dark:text-gray-300">{classData._count.notes} learning materials</span>
                       </div>
                       <div className="flex items-center">
                         <FileText className="w-5 h-5 text-orange-500 mr-3" />
-                        <span className="text-gray-700 dark:text-gray-300">{quizzes.length} quizzes</span>
+                        <span className="text-gray-700 dark:text-gray-300">{classData._count.quizzes} quizzes</span>
                       </div>
                       <div className="flex items-center">
                         <Calendar className="w-5 h-5 text-orange-500 mr-3" />
-                        <span className="text-gray-700 dark:text-gray-300">{assignments.length} assignments</span>
+                        <span className="text-gray-700 dark:text-gray-300">{classData._count.assignments} assignments</span>
                       </div>
                       <div className="flex items-center">
                         <Users className="w-5 h-5 text-orange-500 mr-3" />
@@ -689,7 +689,7 @@ export default function ClassPage() {
                           <div className="text-sm text-gray-600 dark:text-gray-400">Students</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900 dark:text-white">{quizzes.length + assignments.length + notes.length}</div>
+                          <div className="text-2xl font-bold text-gray-900 dark:text-white">{classData._count.quizzes + classData._count.assignments + classData._count.notes}</div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">Total Items</div>
                         </div>
                       </div>
