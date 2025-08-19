@@ -1,21 +1,21 @@
 import nodemailer from 'nodemailer'
 
-// Email configuration - Using the working configuration
+// Email configuration - Using VPS mail server
 const emailConfig = {
-  host: 'mail.classora.in',
-  port: 587,
+  host: '173.249.24.112',
+  port: 25,
   secure: false,
   auth: {
-    user: 'support@classora.in',
-    pass: 'Unbreakable@7001'
+    user: 'classora-noreply',
+    pass: 'Classora2024!'
   },
   tls: {
     rejectUnauthorized: false
   },
   debug: true, // Enable debug to see what's happening
   logger: true,
-  requireTLS: true,
-  ignoreTLS: false
+  requireTLS: false,
+  ignoreTLS: true
 }
 
 // Create transporter
@@ -335,7 +335,7 @@ export async function sendEmail(to: string, template: keyof typeof emailTemplate
     const emailTemplate = emailTemplates[template](data)
     
     const mailOptions = {
-      from: '"Classora" <support@classora.in>',
+      from: '"Classora" <noreply@classora.in>',
       to: to,
       subject: emailTemplate.subject,
       html: emailTemplate.html,
@@ -346,7 +346,7 @@ export async function sendEmail(to: string, template: keyof typeof emailTemplate
         'Importance': 'high',
         'Reply-To': 'support@classora.in',
         'X-Mailer': 'Classora Email System',
-        'List-Unsubscribe': '<mailto:support@classora.in?subject=unsubscribe>',
+        'List-Unsubscribe': '<mailto:noreply@classora.in?subject=unsubscribe>',
         'Precedence': 'bulk'
       }
     }
@@ -434,7 +434,7 @@ export async function sendBackupNotificationEmail(data: {
     const backupFile = fs.readFileSync(data.backupFilePath)
     
     const mailOptions = {
-      from: '"Classora" <support@classora.in>',
+      from: '"Classora" <noreply@classora.in>',
       to: 'jenbumengineering@gmail.com, mainong.jenbum@gmail.com, jenbumacademy@gmail.com',
       subject: emailTemplate.subject,
       html: emailTemplate.html,

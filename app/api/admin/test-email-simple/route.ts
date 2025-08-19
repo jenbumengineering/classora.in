@@ -34,7 +34,41 @@ export async function POST(request: NextRequest) {
     // Test multiple configurations
     const configs = [
       {
-        name: 'Current Config (mail.classora.in:587)',
+        name: 'VPS Mail Server (173.249.24.112:25)',
+        config: {
+          host: '173.249.24.112',
+          port: 25,
+          secure: false,
+          auth: {
+            user: 'classora-noreply',
+            pass: 'Classora2024!'
+          },
+          tls: {
+            rejectUnauthorized: false
+          },
+          requireTLS: false,
+          ignoreTLS: true
+        }
+      },
+      {
+        name: 'VPS Mail Server (173.249.24.112:587)',
+        config: {
+          host: '173.249.24.112',
+          port: 587,
+          secure: false,
+          auth: {
+            user: 'classora-noreply',
+            pass: 'Classora2024!'
+          },
+          tls: {
+            rejectUnauthorized: false
+          },
+          requireTLS: false,
+          ignoreTLS: true
+        }
+      },
+      {
+        name: 'Legacy Config (mail.classora.in:587)',
         config: {
           host: 'mail.classora.in',
           port: 587,
@@ -42,33 +76,6 @@ export async function POST(request: NextRequest) {
           auth: {
             user: 'support@classora.in',
             pass: 'Unbreakable@7001'
-          },
-          tls: {
-            rejectUnauthorized: false
-          }
-        }
-      },
-      {
-        name: 'Alternative Config (server.dnspark.in:465)',
-        config: {
-          host: 'server.dnspark.in',
-          port: 465,
-          secure: true,
-          auth: {
-            user: 'support@classora.in',
-            pass: 'M@inong5567'
-          }
-        }
-      },
-      {
-        name: 'Alternative Config (server.dnspark.in:587)',
-        config: {
-          host: 'server.dnspark.in',
-          port: 587,
-          secure: false,
-          auth: {
-            user: 'support@classora.in',
-            pass: 'M@inong5567'
           },
           tls: {
             rejectUnauthorized: false
@@ -91,7 +98,7 @@ export async function POST(request: NextRequest) {
         
         // Send test email
         const info = await transporter.sendMail({
-          from: '"Classora" <support@classora.in>',
+          from: '"Classora" <noreply@classora.in>',
           to: testRecipient,
           subject: `Test Email - ${config.name}`,
           text: `This is a test email from ${config.name} at ${new Date().toISOString()}`,
