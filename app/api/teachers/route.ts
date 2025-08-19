@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
       id: professor.id,
       name: professor.name,
       email: professor.email,
+      avatar: professor.avatar,
       university: professor.teacherProfile?.university || 'Not specified',
       department: professor.teacherProfile?.department || 'Not specified',
 
