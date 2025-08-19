@@ -103,9 +103,19 @@ interface ClassData {
     id: string
     name: string
     email: string
+    bio?: string
+    avatar?: string
     teacherProfile?: {
       university?: string
+      college?: string
       department?: string
+      address?: string
+      phone?: string
+      website?: string
+      linkedin?: string
+      researchInterests?: string
+      qualifications?: string
+      experience?: string
     }
   }
   _count: {
@@ -349,31 +359,37 @@ export default function ClassPage() {
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">What You'll Learn</h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-3">
-                          <div className="flex items-start">
-                            <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700 dark:text-gray-300">Master fundamental concepts and principles</span>
-                          </div>
-                          <div className="flex items-start">
-                            <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700 dark:text-gray-300">Apply knowledge through practical exercises</span>
-                          </div>
-                          <div className="flex items-start">
-                            <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700 dark:text-gray-300">Develop critical thinking and problem-solving skills</span>
-                          </div>
+                          {notes.length > 0 && (
+                            <div className="flex items-start">
+                              <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
+                              <span className="text-gray-700 dark:text-gray-300">Access {notes.length} comprehensive learning materials and notes</span>
+                            </div>
+                          )}
+                          {quizzes.length > 0 && (
+                            <div className="flex items-start">
+                              <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
+                              <span className="text-gray-700 dark:text-gray-300">Test your knowledge with {quizzes.length} interactive quizzes</span>
+                            </div>
+                          )}
+                          {assignments.length > 0 && (
+                            <div className="flex items-start">
+                              <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
+                              <span className="text-gray-700 dark:text-gray-300">Complete {assignments.length} practical assignments</span>
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-start">
                             <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700 dark:text-gray-300">Understand advanced topics and methodologies</span>
+                            <span className="text-gray-700 dark:text-gray-300">Learn from an experienced instructor in {classData.name}</span>
                           </div>
                           <div className="flex items-start">
                             <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700 dark:text-gray-300">Build real-world projects and applications</span>
+                            <span className="text-gray-700 dark:text-gray-300">Join a community of {classData._count.enrollments} students</span>
                           </div>
                           <div className="flex items-start">
                             <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700 dark:text-gray-300">Prepare for professional development</span>
+                            <span className="text-gray-700 dark:text-gray-300">Track your progress and achievements</span>
                           </div>
                         </div>
                       </div>
@@ -385,15 +401,23 @@ export default function ClassPage() {
                       <ul className="space-y-2 text-gray-700 dark:text-gray-300">
                         <li className="flex items-start">
                           <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                          <span>Basic understanding of the subject matter</span>
+                          <span>Enrollment in this class to access all materials</span>
                         </li>
+                        {quizzes.length > 0 && (
+                          <li className="flex items-start">
+                            <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            <span>Commitment to complete {quizzes.length} quizzes for assessment</span>
+                          </li>
+                        )}
+                        {assignments.length > 0 && (
+                          <li className="flex items-start">
+                            <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            <span>Dedication to finish {assignments.length} assignments</span>
+                          </li>
+                        )}
                         <li className="flex items-start">
                           <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                          <span>Access to required learning materials</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                          <span>Commitment to complete assignments and assessments</span>
+                          <span>Regular participation in class activities</span>
                         </li>
                       </ul>
                     </div>
@@ -525,26 +549,100 @@ export default function ClassPage() {
                       <CardContent className="p-6">
                         <div className="flex items-start space-x-6">
                           <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center">
-                            <User className="w-10 h-10 text-white" />
+                            {classData.professor.avatar ? (
+                              <img 
+                                src={classData.professor.avatar} 
+                                alt={classData.professor.name}
+                                className="w-20 h-20 rounded-full object-cover"
+                              />
+                            ) : (
+                              <User className="w-10 h-10 text-white" />
+                            )}
                           </div>
                           <div className="flex-1">
                             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{classData.professor.name}</h3>
                             <p className="text-gray-600 dark:text-gray-400 mb-4">{classData.professor.email}</p>
-                            {classData.professor.teacherProfile?.university && (
-                              <p className="text-gray-700 dark:text-gray-300 mb-2">
-                                <strong>University:</strong> {classData.professor.teacherProfile.university}
+                            
+                            {/* Professional Information */}
+                            {(classData.professor.teacherProfile?.university || classData.professor.teacherProfile?.college) && (
+                              <div className="mb-4">
+                                <p className="text-gray-700 dark:text-gray-300">
+                                  <strong>Institution:</strong> {classData.professor.teacherProfile?.university || classData.professor.teacherProfile?.college}
+                                </p>
+                                {classData.professor.teacherProfile?.department && (
+                                  <p className="text-gray-700 dark:text-gray-300">
+                                    <strong>Department:</strong> {classData.professor.teacherProfile.department}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Contact Information */}
+                            {(classData.professor.teacherProfile?.phone || classData.professor.teacherProfile?.website || classData.professor.teacherProfile?.linkedin) && (
+                              <div className="mb-4">
+                                {classData.professor.teacherProfile?.phone && (
+                                  <p className="text-gray-700 dark:text-gray-300">
+                                    <strong>Phone:</strong> {classData.professor.teacherProfile.phone}
+                                  </p>
+                                )}
+                                {classData.professor.teacherProfile?.website && (
+                                  <p className="text-gray-700 dark:text-gray-300">
+                                    <strong>Website:</strong> 
+                                    <a href={classData.professor.teacherProfile.website} target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 ml-1">
+                                      {classData.professor.teacherProfile.website}
+                                    </a>
+                                  </p>
+                                )}
+                                {classData.professor.teacherProfile?.linkedin && (
+                                  <p className="text-gray-700 dark:text-gray-300">
+                                    <strong>LinkedIn:</strong> 
+                                    <a href={classData.professor.teacherProfile.linkedin} target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 ml-1">
+                                      {classData.professor.teacherProfile.linkedin}
+                                    </a>
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Research Interests */}
+                            {classData.professor.teacherProfile?.researchInterests && (
+                              <div className="mb-4">
+                                <p className="text-gray-700 dark:text-gray-300">
+                                  <strong>Research Interests:</strong> {classData.professor.teacherProfile.researchInterests}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Qualifications */}
+                            {classData.professor.teacherProfile?.qualifications && (
+                              <div className="mb-4">
+                                <p className="text-gray-700 dark:text-gray-300">
+                                  <strong>Qualifications:</strong> {classData.professor.teacherProfile.qualifications}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Experience */}
+                            {classData.professor.teacherProfile?.experience && (
+                              <div className="mb-4">
+                                <p className="text-gray-700 dark:text-gray-300">
+                                  <strong>Experience:</strong> {classData.professor.teacherProfile.experience}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Bio */}
+                            {classData.professor.bio ? (
+                              <p className="text-gray-700 dark:text-gray-300">
+                                {classData.professor.bio}
+                              </p>
+                            ) : (
+                              <p className="text-gray-700 dark:text-gray-300">
+                                Experienced educator with expertise in {classData.name} and related subjects. 
+                                Committed to providing quality education and fostering student success through 
+                                engaging learning experiences and practical applications.
                               </p>
                             )}
-                            {classData.professor.teacherProfile?.department && (
-                              <p className="text-gray-700 dark:text-gray-300 mb-4">
-                                <strong>Department:</strong> {classData.professor.teacherProfile.department}
-                              </p>
-                            )}
-                            <p className="text-gray-700 dark:text-gray-300">
-                              Experienced educator with expertise in {classData.name} and related subjects. 
-                              Committed to providing quality education and fostering student success through 
-                              engaging learning experiences and practical applications.
-                            </p>
                           </div>
                         </div>
                       </CardContent>
@@ -562,8 +660,8 @@ export default function ClassPage() {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center">
-                        <Play className="w-5 h-5 text-orange-500 mr-3" />
-                        <span className="text-gray-700 dark:text-gray-300">{notes.length} video lessons</span>
+                        <BookOpen className="w-5 h-5 text-orange-500 mr-3" />
+                        <span className="text-gray-700 dark:text-gray-300">{notes.length} learning materials</span>
                       </div>
                       <div className="flex items-center">
                         <FileText className="w-5 h-5 text-orange-500 mr-3" />
@@ -574,12 +672,12 @@ export default function ClassPage() {
                         <span className="text-gray-700 dark:text-gray-300">{assignments.length} assignments</span>
                       </div>
                       <div className="flex items-center">
-                        <Download className="w-5 h-5 text-orange-500 mr-3" />
-                        <span className="text-gray-700 dark:text-gray-300">Downloadable resources</span>
+                        <Users className="w-5 h-5 text-orange-500 mr-3" />
+                        <span className="text-gray-700 dark:text-gray-300">{classData._count.enrollments} enrolled students</span>
                       </div>
                       <div className="flex items-center">
-                        <Award className="w-5 h-5 text-orange-500 mr-3" />
-                        <span className="text-gray-700 dark:text-gray-300">Certificate of completion</span>
+                        <Clock className="w-5 h-5 text-orange-500 mr-3" />
+                        <span className="text-gray-700 dark:text-gray-300">Lifetime access</span>
                       </div>
                     </div>
 
