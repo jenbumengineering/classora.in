@@ -148,6 +148,7 @@ export async function GET(request: NextRequest) {
       totalQuestions: quiz._count.questions,
       timeLimit: quiz.timeLimit || 0,
       status: quiz.status,
+      noteId: quiz.noteId || null,
       createdAt: quiz.createdAt.toISOString(),
       updatedAt: quiz.updatedAt.toISOString(),
       professor: quiz.professor,

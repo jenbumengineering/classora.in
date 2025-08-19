@@ -379,22 +379,22 @@ export default function ClassPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-3">
                           {classData._count.notes > 0 && (
-                            <div className="flex items-start">
-                              <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
+                          <div className="flex items-start">
+                            <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
                               <span className="text-gray-700 dark:text-gray-300">Access {classData._count.notes} comprehensive learning materials and notes</span>
-                            </div>
+                          </div>
                           )}
                           {classData._count.quizzes > 0 && (
-                            <div className="flex items-start">
-                              <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
+                          <div className="flex items-start">
+                            <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
                               <span className="text-gray-700 dark:text-gray-300">Test your knowledge with {classData._count.quizzes} interactive quizzes</span>
-                            </div>
+                          </div>
                           )}
                           {classData._count.assignments > 0 && (
-                            <div className="flex items-start">
-                              <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
+                          <div className="flex items-start">
+                            <Check className="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" />
                               <span className="text-gray-700 dark:text-gray-300">Complete {classData._count.assignments} practical assignments</span>
-                            </div>
+                          </div>
                           )}
                         </div>
                         <div className="space-y-3">
@@ -429,10 +429,10 @@ export default function ClassPage() {
                           </li>
                         )}
                         {classData._count.assignments > 0 && (
-                          <li className="flex items-start">
-                            <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <li className="flex items-start">
+                          <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                             <span>Dedication to finish {classData._count.assignments} assignments</span>
-                          </li>
+                        </li>
                         )}
                         <li className="flex items-start">
                           <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -463,20 +463,22 @@ export default function ClassPage() {
                                 const noteAssignments = assignments.filter(assignment => assignment.noteId === note.id)
                                 const isExpanded = expandedNotes.has(note.id)
                                 
+
+                                
                                 return (
                                   <div key={note.id} className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
                                     {/* Note Header - Always Visible */}
                                     <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-4">
-                                      <div className="flex items-center">
-                                        <BookOpen className="w-5 h-5 text-orange-500 mr-3" />
+                                  <div className="flex items-center">
+                                    <BookOpen className="w-5 h-5 text-orange-500 mr-3" />
                                         <span className="text-gray-900 dark:text-gray-300 font-medium">{note.title}</span>
-                                      </div>
-                                      <div className="flex items-center space-x-4">
-                                        <span className="text-gray-500 dark:text-gray-400 text-sm">
-                                          {formatDate(note.createdAt)}
-                                        </span>
-                                        <Button asChild variant="outline" size="sm">
-                                          <Link href={`/dashboard/notes/${note.id}`}>
+                                  </div>
+                                  <div className="flex items-center space-x-4">
+                                    <span className="text-gray-500 dark:text-gray-400 text-sm">
+                                      {formatDate(note.createdAt)}
+                                    </span>
+                                    <Button asChild variant="outline" size="sm">
+                                      <Link href={`/dashboard/notes/${note.id}`}>
                                             View Note
                                           </Link>
                                         </Button>
@@ -520,9 +522,9 @@ export default function ClassPage() {
                                                   <Button asChild variant="outline" size="sm" className="w-full">
                                                     <Link href={`/dashboard/quizzes/${quiz.id}`}>
                                                       View Quiz
-                                                    </Link>
-                                                  </Button>
-                                                </div>
+                                      </Link>
+                                    </Button>
+                                  </div>
                                               ))}
                                             </div>
                                           </div>
@@ -551,8 +553,8 @@ export default function ClassPage() {
                                                       View Assignment
                                                     </Link>
                                                   </Button>
-                                                </div>
-                                              ))}
+                                </div>
+                              ))}
                                             </div>
                                           </div>
                                         )}
@@ -606,7 +608,7 @@ export default function ClassPage() {
                                 className="w-20 h-20 rounded-full object-cover"
                               />
                             ) : (
-                              <User className="w-10 h-10 text-white" />
+                            <User className="w-10 h-10 text-white" />
                             )}
                           </div>
                           <div className="flex-1">
@@ -687,11 +689,11 @@ export default function ClassPage() {
                                 {classData.professor.bio}
                               </p>
                             ) : (
-                              <p className="text-gray-700 dark:text-gray-300">
-                                Experienced educator with expertise in {classData.name} and related subjects. 
-                                Committed to providing quality education and fostering student success through 
-                                engaging learning experiences and practical applications.
-                              </p>
+                            <p className="text-gray-700 dark:text-gray-300">
+                              Experienced educator with expertise in {classData.name} and related subjects. 
+                              Committed to providing quality education and fostering student success through 
+                              engaging learning experiences and practical applications.
+                            </p>
                             )}
                           </div>
                         </div>

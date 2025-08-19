@@ -110,6 +110,7 @@ export async function GET(request: NextRequest) {
       status: assignment.status,
       category: assignment.category || '',
       fileUrl: assignment.fileUrl || '',
+      noteId: assignment.noteId || null,
       createdAt: assignment.createdAt.toISOString(),
       updatedAt: assignment.updatedAt.toISOString(),
       professor: assignment.professor
