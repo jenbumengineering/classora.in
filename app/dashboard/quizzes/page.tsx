@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
@@ -31,7 +30,6 @@ interface Quiz {
 
 export default function QuizzesPage() {
   const { user } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null)
@@ -100,177 +98,146 @@ export default function QuizzesPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <DashboardSidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        userRole={user?.role as 'STUDENT' | 'PROFESSOR' || 'STUDENT'}
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader 
-          user={user}
-          onMenuClick={() => setSidebarOpen(true)}
-        />
-        
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-          <div className="container mx-auto px-6 py-8">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Quizzes</h1>
-                <p className="text-gray-600 mt-2">
-                  {isProfessor ? 'Create and manage quizzes for your students' : 'Take quizzes to test your knowledge'}
-                </p>
-              </div>
-              {isProfessor && (
-                <Button asChild>
-                  <Link href="/dashboard/quizzes/new">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Quiz
-                  </Link>
-                </Button>
-              )}
-            </div>
+    <DashboardLayout>
+      {/* Header */}
+      <div className="px-6 py-8 mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Quizzes</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              {isProfessor 
+                ? 'Create and manage quizzes for your students' 
+                : 'Take quizzes to test your knowledge'
+              }
+            </p>
+          </div>
+          {isProfessor && (
+            <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Link href="/dashboard/quizzes/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Quiz
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
 
-            {isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <LoadingSpinner size="lg" />
+      <div className="px-6 pb-8">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : quizzes.length === 0 ? (
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <CardContent className="p-12 text-center">
+              <div className="text-gray-500 dark:text-gray-400">
+                <Code className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                <h3 className="text-lg font-medium mb-2">
+                  {isProfessor ? 'No quizzes yet' : 'No quizzes available'}
+                </h3>
+                <p className="mb-4">
+                  {isProfessor 
+                    ? 'Create your first quiz to assess your students\' knowledge'
+                    : 'Quizzes will appear here once your professors create them'
+                  }
+                </p>
+                {isProfessor && (
+                  <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+                    <Link href="/dashboard/quizzes/new">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Your First Quiz
+                    </Link>
+                  </Button>
+                )}
               </div>
-            ) : quizzes.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <div className="text-gray-500">
-                    <Code className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-medium mb-2">No quizzes yet</h3>
-                    <p className="mb-4">Create your first quiz to test your students' knowledge.</p>
-                    <Button asChild>
-                      <Link href="/dashboard/quizzes/new">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Your First Quiz
-                      </Link>
-                    </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {quizzes.map((quiz) => (
+              <Card key={quiz.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <CardTitle className="text-gray-900 dark:text-white">{quiz.title}</CardTitle>
+                      <CardDescription className="text-gray-600 dark:text-gray-400">
+                        {quiz.className}
+                      </CardDescription>
+                    </div>
+                    {isProfessor && (
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                        >
+                          <Link href={`/dashboard/quizzes/${quiz.id}/edit`}>
+                            <Edit className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteQuiz(quiz.id)}
+                          disabled={deletingQuizId === quiz.id}
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                        >
+                          {deletingQuizId === quiz.id ? (
+                            <LoadingSpinner size="sm" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                      {quiz.description}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                      <Code className="w-4 h-4" />
+                      <span>{quiz.totalQuestions} questions</span>
+                    </div>
+                    {quiz.timeLimit > 0 && (
+                      <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                        <Play className="w-4 h-4" />
+                        <span>{quiz.timeLimit} min</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(quiz.createdAt).toLocaleDateString()}
+                    </span>
+                    <div className="flex space-x-2">
+                      <Button asChild variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Link href={`/dashboard/quizzes/${quiz.id}`}>
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Link>
+                      </Button>
+                      {isProfessor && (
+                        <Button asChild variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <Link href={`/dashboard/quizzes/${quiz.id}/stats`}>
+                            <BarChart3 className="w-4 h-4 mr-1" />
+                            Stats
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {quizzes.map((quiz) => (
-                  <Card key={quiz.id} className="hover:shadow-lg transition-shadow duration-200">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg">{quiz.title}</CardTitle>
-                          <CardDescription>{quiz.className}</CardDescription>
-                        </div>
-                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          quiz.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' : 
-                          quiz.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800' : 
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {quiz.status === 'PUBLISHED' ? 'Published' : 
-                           quiz.status === 'DRAFT' ? 'Draft' : 'Closed'}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-                        {quiz.description}
-                      </p>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <Code className="w-4 h-4" />
-                          <span>{quiz.totalQuestions} questions</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <Play className="w-4 h-4" />
-                          <span>{quiz.timeLimit} min</span>
-                        </div>
-                      </div>
-                      
-                      {/* Attempt Information for Students */}
-                      {isStudent && quiz.attempts && (
-                        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600">Attempts:</span>
-                            <span className="font-medium">
-                              {quiz.attempts.length} (Unlimited)
-                            </span>
-                          </div>
-                          {quiz.attempts.length > 0 && (
-                            <div className="mt-2 text-sm">
-                              <span className="text-gray-600">Best Score: </span>
-                              <span className="font-medium text-green-600">
-                                {Math.max(...quiz.attempts.map(a => a.score || 0))} points
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-gray-500">
-                          {new Date(quiz.createdAt).toLocaleDateString()}
-                        </span>
-                        <div className="flex space-x-2">
-                          {isProfessor ? (
-                            <>
-                              <Button asChild variant="ghost" size="sm">
-                                <Link href={`/dashboard/quizzes/${quiz.id}/stats`}>
-                                  <BarChart3 className="w-4 h-4" />
-                                </Link>
-                              </Button>
-                              <Button asChild variant="ghost" size="sm">
-                                <Link href={`/dashboard/quizzes/${quiz.id}/edit`}>
-                                  <Edit className="w-4 h-4" />
-                                </Link>
-                              </Button>
-                              <Button asChild variant="outline" size="sm">
-                                <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                                  View
-                                </Link>
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleDeleteQuiz(quiz.id)}
-                                disabled={deletingQuizId === quiz.id}
-                              >
-                                {deletingQuizId === quiz.id ? (
-                                  <LoadingSpinner size="sm" />
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button asChild variant="outline" size="sm">
-                                <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                                  View
-                                </Link>
-                              </Button>
-                              {quiz.status === 'PUBLISHED' && (
-                                <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                                  <Link href={`/dashboard/quizzes/${quiz.id}/take`}>
-                                    <Play className="w-4 h-4 mr-1" />
-                                    Take Quiz
-                                  </Link>
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
-        </main>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

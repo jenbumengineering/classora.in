@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // Note: Using String instead of enum for SQLite compatibility
@@ -106,6 +106,7 @@ model Class {
   isArchived  Boolean   @default(false)
   archivedAt  DateTime?
   gradientColor String? @default("from-gray-900 to-black")
+  imageUrl    String?
   professor   User      @relation(fields: [professorId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

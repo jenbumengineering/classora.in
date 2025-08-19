@@ -29,6 +29,7 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = async () => {
     try {
@@ -52,6 +53,10 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
     }
   }
 
+  const handleUserMenuToggle = () => {
+    setUserMenuOpen(!userMenuOpen)
+  }
+
   const handleMarkAllAsRead = async () => {
     // Mark notifications as read
     await markAllAsRead()
@@ -61,10 +66,6 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
       await markAllContentAsViewed()
     }
   }
-
-
-
-
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -91,6 +92,9 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setNotificationMenuOpen(false)
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false)
+      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
@@ -100,7 +104,7 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
   }, [])
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
       <div className="flex items-center justify-between">
         {/* Left side - Mobile menu and search */}
         <div className="flex items-center space-x-4">
@@ -108,18 +112,18 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
             variant="ghost"
             size="sm"
             onClick={onMenuClick}
-            className="md:hidden"
+            className="md:hidden text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
             <Menu className="h-5 w-5" />
           </Button>
           
           <div className="hidden md:flex items-center space-x-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
-                                    placeholder="Search classes, notes, quizzes..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Search classes, notes, quizzes..."
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -132,7 +136,7 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="relative"
+              className="relative text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               onClick={handleNotificationToggle}
             >
               <Bell className="h-5 w-5" />
@@ -148,13 +152,13 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
 
             {/* Notification Dropdown */}
             {notificationMenuOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200 max-h-96 overflow-y-auto">
-                <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="text-sm font-medium text-gray-900">Notifications</h3>
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
+                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">Notifications</h3>
                   {(unreadCount > 0 || (user?.role === 'STUDENT' && unreadCounts.totalUnread > 0)) && (
                     <button
                       onClick={handleMarkAllAsRead}
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
                     >
                       Mark all as read
                     </button>
@@ -163,8 +167,8 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
                 
                 {notifications.length === 0 && (!user || user.role !== 'STUDENT' || unreadCounts.totalUnread === 0) ? (
                   <div className="px-4 py-8 text-center">
-                    <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No notifications</p>
+                    <Bell className="h-8 w-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
                   </div>
                 ) : (
                   <div className="max-h-64 overflow-y-auto">
@@ -172,10 +176,10 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-l-4 ${
+                        className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-l-4 ${
                           notification.isRead 
-                            ? 'border-transparent bg-gray-50' 
-                            : 'border-blue-500 bg-blue-50'
+                            ? 'border-transparent bg-gray-50 dark:bg-gray-700' 
+                            : 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
                         }`}
                         onClick={() => handleNotificationClick(notification.id)}
                       >
@@ -183,19 +187,19 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
                           <span className="text-lg">{getNotificationIcon(notification.type)}</span>
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-medium ${
-                              notification.isRead ? 'text-gray-600' : 'text-gray-900'
+                              notification.isRead ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'
                             }`}>
                               {notification.title}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </p>
                           </div>
                           {!notification.isRead && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                            <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-1"></div>
                           )}
                         </div>
                       </div>
@@ -203,71 +207,69 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
                     
                     {/* Show unread content summary for students */}
                     {user?.role === 'STUDENT' && unreadCounts.totalUnread > 0 && (
-                      <div className="px-4 py-3 border-t border-gray-100">
+                      <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
                         <div className="flex items-start space-x-3">
                           <span className="text-lg">📚</span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
                               New content available
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               {unreadCounts.unreadAssignments > 0 && `${unreadCounts.unreadAssignments} new assignment${unreadCounts.unreadAssignments > 1 ? 's' : ''}`}
                               {unreadCounts.unreadAssignments > 0 && unreadCounts.unreadQuizzes > 0 && ', '}
                               {unreadCounts.unreadQuizzes > 0 && `${unreadCounts.unreadQuizzes} new quiz${unreadCounts.unreadQuizzes > 1 ? 'es' : ''}`}
                               {((unreadCounts.unreadAssignments > 0 || unreadCounts.unreadQuizzes > 0) && unreadCounts.unreadNotes > 0) && ', '}
                               {unreadCounts.unreadNotes > 0 && `${unreadCounts.unreadNotes} new note${unreadCounts.unreadNotes > 1 ? 's' : ''}`}
                             </p>
-                            <p className="text-xs text-blue-600 mt-1">
+                            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                               Check your dashboard for details
                             </p>
                           </div>
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                          <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-1"></div>
                         </div>
                       </div>
                     )}
                   </div>
                 )}
-                
-
               </div>
             )}
           </div>
 
           {/* User menu */}
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center space-x-2"
+              onClick={handleUserMenuToggle}
+              className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
-              <div className="h-8 w-8 bg-primary-600 rounded-full flex items-center justify-center">
+              <div className="h-8 w-8 bg-orange-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
                   {user?.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="hidden md:block text-sm font-medium text-gray-700">
+              <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {user?.name}
               </span>
-              <ChevronDown className="h-4 w-4 text-gray-400" />
+              <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             </Button>
 
             {/* Dropdown menu */}
             {userMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-sm text-gray-500">{user?.email}</p>
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
                 </div>
                 
-                <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
                     <span>Profile</span>
                   </div>
                 </Link>
                 
-                <Link href="/dashboard/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <Link href="/dashboard/settings" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                   <div className="flex items-center space-x-2">
                     <Settings className="h-4 w-4" />
                     <span>Settings</span>
@@ -276,7 +278,7 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
                 
                 <button
                   onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <div className="flex items-center space-x-2">
                     <LogOut className="h-4 w-4" />

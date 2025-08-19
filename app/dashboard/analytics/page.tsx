@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
@@ -34,7 +33,6 @@ interface AnalyticsData {
 
 export default function AnalyticsPage() {
   const { user } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalStudents: 0,
     totalClasses: 0,
@@ -84,232 +82,195 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <DashboardSidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        userRole={user?.role as 'STUDENT' | 'PROFESSOR' || 'STUDENT'}
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader 
-          user={user}
-          onMenuClick={() => setSidebarOpen(true)}
-        />
-        
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-          <div className="container mx-auto px-6 py-8">
-            {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-              <p className="text-gray-600 mt-2">Track your teaching performance and student engagement</p>
-            </div>
+    <DashboardLayout>
+      {/* Header */}
+      <div className="px-6 py-8 mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Analytics</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          {user?.role === 'PROFESSOR' 
+            ? 'Track your teaching performance and student engagement' 
+            : 'Monitor your learning progress and achievements'
+          }
+        </p>
+      </div>
 
+      <div className="px-6 pb-8">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : (
+          <div className="space-y-8">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">
+                    {user?.role === 'PROFESSOR' ? 'Total Students' : 'Enrolled Classes'}
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-orange-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{analytics.totalStudents}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Enrolled students
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {user?.role === 'PROFESSOR' ? analytics.totalStudents : analytics.totalClasses}
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {user?.role === 'PROFESSOR' ? 'Active students' : 'Your classes'}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Grade</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">
+                    {user?.role === 'PROFESSOR' ? 'Average Grade' : 'Your Average'}
+                  </CardTitle>
+                  <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{analytics.averageGrade}%</div>
-                  <p className="text-xs text-muted-foreground">
-                    Across all assessments
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {analytics.averageGrade}%
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {user?.role === 'PROFESSOR' ? 'Class average' : 'Overall performance'}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">
+                    {user?.role === 'PROFESSOR' ? 'Completion Rate' : 'Progress'}
+                  </CardTitle>
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{analytics.completionRate}%</div>
-                  <p className="text-xs text-muted-foreground">
-                    Assignment completion
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {analytics.completionRate}%
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {user?.role === 'PROFESSOR' ? 'Assignment completion' : 'Course completion'}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Students</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">
+                    {user?.role === 'PROFESSOR' ? 'Active Students' : 'Active Days'}
+                  </CardTitle>
+                  <Calendar className="h-4 w-4 text-purple-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{analytics.activeStudents}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Last 30 days
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {user?.role === 'PROFESSOR' ? analytics.activeStudents : analytics.performanceMetrics.studentEngagement}
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {user?.role === 'PROFESSOR' ? 'This week' : 'This month'}
                   </p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Content Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <BookOpen className="h-5 w-5" />
-                    <span>Notes</span>
-                  </CardTitle>
+                  <CardTitle className="text-gray-900 dark:text-white">Assignments</CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    {user?.role === 'PROFESSOR' ? 'Created assignments' : 'Completed assignments'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold mb-2">{analytics.totalNotes}</div>
-                  <p className="text-sm text-gray-600 mb-4">Published notes</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${Math.min((analytics.totalNotes / Math.max(analytics.totalClasses, 1)) * 100, 100)}%` }}></div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    {analytics.totalAssignments}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <FileText className="w-4 h-4 mr-2" />
+                    {user?.role === 'PROFESSOR' ? 'Total created' : 'Total completed'}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Code className="h-5 w-5" />
-                    <span>Quizzes</span>
-                  </CardTitle>
+                  <CardTitle className="text-gray-900 dark:text-white">Quizzes</CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    {user?.role === 'PROFESSOR' ? 'Created quizzes' : 'Taken quizzes'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold mb-2">{analytics.totalQuizzes}</div>
-                  <p className="text-sm text-gray-600 mb-4">Active quizzes</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: `${Math.min((analytics.totalQuizzes / Math.max(analytics.totalClasses, 1)) * 100, 100)}%` }}></div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    {analytics.totalQuizzes}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <Code className="w-4 h-4 mr-2" />
+                    {user?.role === 'PROFESSOR' ? 'Total created' : 'Total taken'}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <FileText className="h-5 w-5" />
-                    <span>Assignments</span>
-                  </CardTitle>
+                  <CardTitle className="text-gray-900 dark:text-white">Notes</CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    {user?.role === 'PROFESSOR' ? 'Published notes' : 'Available notes'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold mb-2">{analytics.totalAssignments}</div>
-                  <p className="text-sm text-gray-600 mb-4">Active assignments</p>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${Math.min((analytics.totalAssignments / Math.max(analytics.totalClasses, 1)) * 100, 100)}%` }}></div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    {analytics.totalNotes}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Monthly Trends */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Trends</CardTitle>
-                  <CardDescription>Student engagement over time</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    <div className="flex justify-center items-center py-12">
-                      <LoadingSpinner size="md" />
-                    </div>
-                  ) : analytics.monthlyStats.length === 0 ? (
-                    <div className="h-64 flex items-center justify-center text-gray-500">
-                      <div className="text-center">
-                        <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p>No data available</p>
-                        <p className="text-sm">Monthly trends will appear here</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-64">
-                      <div className="flex items-end justify-between h-48 mb-4">
-                        {analytics.monthlyStats.map((stat, index) => (
-                          <div key={index} className="flex flex-col items-center">
-                            <div className="text-xs text-gray-600 mb-2">{stat.students}</div>
-                            <div 
-                              className="w-8 bg-blue-500 rounded-t"
-                              style={{ 
-                                height: `${Math.max((stat.students / Math.max(...analytics.monthlyStats.map(s => s.students))) * 120, 8)}px` 
-                              }}
-                            ></div>
-                            <div className="text-xs text-gray-500 mt-2">{stat.month}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="text-center text-sm text-gray-600">
-                        Student enrollments over the last 6 months
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Performance Metrics */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance Metrics</CardTitle>
-                  <CardDescription>Key performance indicators</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Student Engagement</span>
-                        <span className="text-sm text-gray-600">{analytics.performanceMetrics.studentEngagement}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${analytics.performanceMetrics.studentEngagement}%` }}></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Assignment Completion</span>
-                        <span className="text-sm text-gray-600">{analytics.performanceMetrics.assignmentCompletion}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-green-600 h-2 rounded-full" style={{ width: `${analytics.performanceMetrics.assignmentCompletion}%` }}></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Quiz Performance</span>
-                        <span className="text-sm text-gray-600">{analytics.performanceMetrics.quizPerformance}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${analytics.performanceMetrics.quizPerformance}%` }}></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Content Consumption</span>
-                        <span className="text-sm text-gray-600">{analytics.performanceMetrics.contentConsumption}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${analytics.performanceMetrics.contentConsumption}%` }}></div>
-                      </div>
-                    </div>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    {user?.role === 'PROFESSOR' ? 'Total published' : 'Total available'}
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Performance Metrics */}
+            {user?.role === 'PROFESSOR' && (
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-gray-900 dark:text-white">Performance Metrics</CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    Key indicators of your teaching effectiveness
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        {analytics.performanceMetrics.studentEngagement}%
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Student Engagement</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        {analytics.performanceMetrics.assignmentCompletion}%
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Assignment Completion</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        {analytics.performanceMetrics.quizPerformance}%
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Quiz Performance</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                        {analytics.performanceMetrics.contentConsumption}%
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Content Consumption</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
-        </main>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

@@ -9,6 +9,7 @@ const createClassSchema = z.object({
   description: z.string().optional(),
   isPrivate: z.boolean().default(false),
   gradientColor: z.string().optional(),
+  imageUrl: z.string().optional(),
 })
 
 // Validation schema for searching classes
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
         description: validatedData.description,
         isPrivate: validatedData.isPrivate,
         gradientColor: validatedData.gradientColor,
+        imageUrl: validatedData.imageUrl,
         professorId: professorId,
       },
       include: {
@@ -173,7 +175,18 @@ export async function GET(request: NextRequest) {
     // Get classes with professor information
     const classes = await prisma.class.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        description: true,
+        isPrivate: true,
+        isArchived: true,
+        archivedAt: true,
+        gradientColor: true,
+        imageUrl: true,
+        createdAt: true,
+        updatedAt: true,
         professor: {
           select: {
             id: true,

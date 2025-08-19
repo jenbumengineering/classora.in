@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
@@ -34,7 +33,6 @@ interface Note {
 
 export default function NotesPage() {
   const { user } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notes, setNotes] = useState<Note[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -99,118 +97,116 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <DashboardSidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        userRole={user?.role as 'STUDENT' | 'PROFESSOR' || 'STUDENT'}
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader 
-          user={user}
-          onMenuClick={() => setSidebarOpen(true)}
-        />
-        
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-          <div className="container mx-auto px-6 py-8">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Notes</h1>
-                <p className="text-gray-600 mt-2">Manage your course notes and materials</p>
-              </div>
-              <Button asChild>
-                <Link href="/dashboard/notes/new">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Note
-                </Link>
-              </Button>
-            </div>
+    <DashboardLayout>
+      <div className="px-6 py-8 mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Notes</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              {user?.role === 'PROFESSOR' 
+                ? 'Create and manage your class notes'
+                : 'Access notes from your enrolled classes'
+              }
+            </p>
+          </div>
+          {user?.role === 'PROFESSOR' && (
+            <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Link href="/dashboard/notes/new">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Note
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
 
-            {isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <LoadingSpinner size="lg" />
+      <div className="px-6 pb-8">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : notes.length === 0 ? (
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <CardContent className="p-12 text-center">
+              <div className="text-gray-500 dark:text-gray-400">
+                <BookOpen className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                <h3 className="text-lg font-medium mb-2">
+                  {user?.role === 'PROFESSOR' ? 'No notes yet' : 'No notes available'}
+                </h3>
+                <p className="mb-4">
+                  {user?.role === 'PROFESSOR' 
+                    ? 'Create your first note to share knowledge with your students'
+                    : 'Notes will appear here once your professors publish them'
+                  }
+                </p>
+                {user?.role === 'PROFESSOR' && (
+                  <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+                    <Link href="/dashboard/notes/new">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Your First Note
+                    </Link>
+                  </Button>
+                )}
               </div>
-            ) : notes.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <div className="text-gray-500">
-                    <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-medium mb-2">No notes yet</h3>
-                    <p className="mb-4">Create your first note to share with your students.</p>
-                    <Button asChild>
-                      <Link href="/dashboard/notes/new">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Your First Note
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {notes.map((note) => (
+              <Card key={note.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <CardTitle className="text-gray-900 dark:text-white">{note.title}</CardTitle>
+                      <CardDescription className="text-gray-600 dark:text-gray-400">
+                        {note.class.name} • {note.class.code}
+                      </CardDescription>
+                    </div>
+                    {user?.role === 'PROFESSOR' && (
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                        >
+                          <Link href={`/dashboard/notes/${note.id}/edit`}>
+                            <Edit className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteNote(note.id)}
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <RichTextRenderer content={note.content} maxLength={150} />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(note.createdAt).toLocaleDateString()}
+                    </span>
+                    <Button asChild variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <Link href={`/dashboard/notes/${note.id}`}>
+                        <Eye className="w-4 h-4 mr-1" />
+                        View
                       </Link>
                     </Button>
                   </div>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {notes.map((note) => (
-                  <Card key={note.id} className="hover:shadow-lg transition-shadow duration-200">
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        <Link href={`/dashboard/notes/${note.id}`} className="hover:text-blue-600 transition-colors">
-                          {note.title}
-                        </Link>
-                      </CardTitle>
-                      <CardDescription>{note.class.code} - {note.class.name}</CardDescription>
-                    </CardHeader>
-                                <CardContent>
-              <div className="text-sm text-gray-600 mb-4 line-clamp-3">
-                <RichTextRenderer content={note.content} />
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-500">
-                    {new Date(note.createdAt).toLocaleDateString()}
-                  </span>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    note.status === 'PUBLISHED'
-                      ? 'bg-green-100 text-green-800'
-                      : note.status === 'DRAFT'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {note.status}
-                  </span>
-                </div>
-                <div className="flex space-x-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/dashboard/notes/${note.id}`}>
-                      View
-                    </Link>
-                  </Button>
-                  {user?.role === 'PROFESSOR' && (
-                    <>
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/dashboard/notes/${note.id}/edit`}>
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteNote(note.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
-        </main>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

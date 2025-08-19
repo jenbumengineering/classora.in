@@ -29,7 +29,16 @@ export async function GET(request: NextRequest) {
     // Get professor's classes
     const classes = await prisma.class.findMany({
       where: { professorId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        description: true,
+        isPrivate: true,
+        isArchived: true,
+        gradientColor: true,
+        imageUrl: true,
+        createdAt: true,
         _count: {
           select: {
             enrollments: true,

@@ -6,7 +6,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useSettings } from '@/components/providers/SettingsProvider'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Eye, EyeOff, GraduationCap, User, AlertTriangle } from 'lucide-react'
+import { Eye, EyeOff, GraduationCap, User, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import toast from 'react-hot-toast'
 
@@ -27,10 +27,10 @@ export default function RegisterPage() {
   // Show loading state while settings are being fetched
   if (settingsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     )
@@ -39,29 +39,30 @@ export default function RegisterPage() {
   // Check if registration is disabled
   if (settings && !settings.registrationEnabled) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <Logo size="lg" variant="full" />
+            <div className="flex items-center justify-center mb-6">
+              <Logo size="lg" variant="full" theme="light" className="dark:hidden" />
+              <Logo size="lg" variant="full" theme="dark" className="hidden dark:flex" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Registration Disabled</h1>
-            <p className="text-gray-600">New user registration is currently disabled</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Registration Disabled</h1>
+            <p className="text-gray-600 dark:text-gray-400">New user registration is currently disabled</p>
           </div>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg">
             <CardContent className="p-8 text-center">
               <div className="flex items-center justify-center mb-4">
-                <AlertTriangle className="w-12 h-12 text-yellow-600" />
+                <AlertTriangle className="w-12 h-12 text-yellow-600 dark:text-yellow-400" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Registration Temporarily Unavailable
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 We're currently not accepting new user registrations. 
                 Please check back later or contact support for assistance.
               </p>
-              <Button asChild>
+              <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
                 <Link href="/auth/login">
                   Back to Login
                 </Link>
@@ -106,27 +107,33 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Logo and Title */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Logo size="lg" variant="full" />
+          <div className="flex items-center justify-center mb-6">
+            <Logo size="lg" variant="full" theme="light" className="dark:hidden" />
+            <Logo size="lg" variant="full" theme="dark" className="hidden dark:flex" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
-          <p className="text-gray-600">Join our educational platform</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create your account</h1>
+          <p className="text-gray-600 dark:text-gray-400">Join our educational platform</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign Up</CardTitle>
-            <CardDescription>
+        {/* Registration Card */}
+        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+              Sign Up
+            </CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
               Fill in your details to create your account
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Full Name Field */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Full Name
                 </label>
                 <input
@@ -135,14 +142,15 @@ export default function RegisterPage() {
                   type="text"
                   value={formData.name}
                   onChange={handleChange}
-                  className="input w-full"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   placeholder="Enter your full name"
                   required
                 />
               </div>
 
+              {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Email
                 </label>
                 <input
@@ -151,14 +159,15 @@ export default function RegisterPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="input w-full"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   placeholder="Enter your email"
                   required
                 />
               </div>
 
+              {/* Role Selection */}
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="role" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                   I am a
                 </label>
                 <select
@@ -166,7 +175,7 @@ export default function RegisterPage() {
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="input w-full"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   required
                 >
                   <option value="STUDENT">Student</option>
@@ -174,8 +183,9 @@ export default function RegisterPage() {
                 </select>
               </div>
 
+              {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Password
                 </label>
                 <div className="relative">
@@ -185,27 +195,28 @@ export default function RegisterPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={handleChange}
-                    className="input w-full pr-10"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-10"
                     placeholder="Create a password"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
+                      <Eye className="h-4 w-4" />
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Must be at least 8 characters</p>
               </div>
 
+              {/* Confirm Password Field */}
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -215,43 +226,56 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="input w-full pr-10"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent pr-10"
                     placeholder="Confirm your password"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
+                      <EyeOff className="h-4 w-4" />
                     ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
+                      <Eye className="h-4 w-4" />
                     )}
                   </button>
                 </div>
               </div>
 
+              {/* Create Account Button */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-md font-medium text-base transition-colors duration-200"
                 disabled={loading}
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </Button>
             </form>
 
+            {/* Sign In Link */}
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Already have an account?{' '}
-                <Link href="/auth/login" className="text-primary-600 hover:text-primary-700 font-medium">
+                <Link href="/auth/login" className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium">
                   Sign in
                 </Link>
               </p>
             </div>
           </CardContent>
         </Card>
+
+        {/* Back to Home Link */}
+        <div className="mt-8 text-center">
+          <Link 
+            href="/" 
+            className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to home
+          </Link>
+        </div>
       </div>
     </div>
   )

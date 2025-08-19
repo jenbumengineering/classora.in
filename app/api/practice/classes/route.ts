@@ -33,7 +33,8 @@ export async function GET(request: NextRequest) {
           id: true,
           name: true,
           code: true,
-          description: true
+          description: true,
+          imageUrl: true
         },
         orderBy: {
           name: 'asc'
@@ -51,7 +52,8 @@ export async function GET(request: NextRequest) {
           id: true,
           name: true,
           code: true,
-          description: true
+          description: true,
+          imageUrl: true
         },
         orderBy: {
           name: 'asc'
@@ -80,6 +82,7 @@ export async function GET(request: NextRequest) {
       name: cls.name,
       code: cls.code,
       description: cls.description,
+      imageUrl: cls.imageUrl,
       questionCount: cls.questionCount
     }))
 

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { Lock, Archive, Eye, Users } from 'lucide-react'
+import { Lock, Archive, Eye, Users, User } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
 
@@ -17,6 +17,7 @@ interface BasicClassCardProps {
     isArchived: boolean
     archivedAt?: string
     gradientColor?: string
+    imageUrl?: string
     createdAt: string
     professor: {
       id: string
@@ -107,109 +108,118 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
   const isProfessor = user?.role === 'PROFESSOR' && user?.id === classData.professor.id
 
   return (
-    <div className={`border rounded-lg hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden ${
-      classData.isArchived 
-        ? 'opacity-75 bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200' 
-        : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200'
-    }`}>
-      {/* Main Content Container with Dark Gradient */}
-      <div className={`bg-gradient-to-br ${selectedGradient} p-4 mb-4 text-white rounded-b-lg`}>
-        {/* Class Info Section */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-white mb-2">{classData.name}</h3>
-            <p className="text-sm text-blue-200 mb-1 font-medium">{classData.code}</p>
-            <p className="text-sm text-blue-100">by {classData.professor.name}</p>
+    <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl">
+      {/* Image Section */}
+      <div className="h-48 bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-gray-700 dark:to-gray-800 relative">
+        {classData.imageUrl ? (
+          <img 
+            src={classData.imageUrl} 
+            alt={classData.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-gray-400 dark:text-gray-500 mb-2">
+                {classData.code}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                No image uploaded
+              </div>
+            </div>
           </div>
-          <div className="flex items-center space-x-2 ml-4">
-            {classData.isPrivate && (
-              <Lock className="w-4 h-4 text-purple-300" />
-            )}
-            {classData.isArchived && (
-              <Archive className="w-4 h-4 text-gray-300" />
-            )}
-          </div>
-        </div>
-        
-        {classData.description && (
-          <p className="text-blue-100 text-sm mb-4 line-clamp-2">{classData.description}</p>
         )}
-
-        {/* Statistics Section with Light Gradient Border */}
-        <div className="bg-white/10 rounded-lg p-3 border border-gradient-to-r from-blue-300 to-indigo-300">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            <div className="flex flex-col items-center">
-              <div className="flex items-center text-white font-semibold text-sm">
-                <Users className="w-4 h-4 mr-1 text-blue-200" />
-                <span className="text-lg font-bold">{classData._count.enrollments}</span>
-              </div>
-              <span className="text-xs text-blue-200 mt-1">Students</span>
+        {/* Class Code Badge */}
+        <div className="absolute top-3 left-3">
+          <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded">
+            {classData.code}
+          </span>
+        </div>
+        {/* Status Icons */}
+        <div className="absolute top-3 right-3 flex space-x-1">
+          {classData.isPrivate && (
+            <div className="bg-purple-500 text-white p-1 rounded">
+              <Lock className="w-3 h-3" />
             </div>
-            <div className="flex flex-col items-center">
-              <div className="text-white font-semibold text-sm">
-                <span className="text-lg font-bold">{classData._count.notes}</span>
-              </div>
-              <span className="text-xs text-blue-200 mt-1">Notes</span>
+          )}
+          {classData.isArchived && (
+            <div className="bg-gray-500 text-white p-1 rounded">
+              <Archive className="w-3 h-3" />
             </div>
-            <div className="flex flex-col items-center">
-              <div className="text-white font-semibold text-sm">
-                <span className="text-lg font-bold">{classData._count.quizzes}</span>
-              </div>
-              <span className="text-xs text-blue-200 mt-1">Quizzes</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-white font-semibold text-sm">
-                <span className="text-lg font-bold">{classData._count.assignments}</span>
-              </div>
-              <span className="text-xs text-blue-200 mt-1">Assignments</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Action Buttons at Bottom */}
-      <div className="flex space-x-2 p-6 pt-0">
-        <Link href={`/classes/${classData.id}`} className="flex-1">
-          <Button className={`w-full bg-gradient-to-r ${selectedGradient} hover:opacity-90 text-white border-0`} variant="outline">
-            <Eye className="w-4 h-4 mr-2" />
-            View Class
-          </Button>
-        </Link>
-        
-        {isProfessor && (
-          <>
-            <Button
-              onClick={handlePrivacyToggle}
-              disabled={isUpdating}
-              variant="outline"
-              size="sm"
-              title={classData.isPrivate ? 'Make Public' : 'Make Private'}
-              className="border-purple-300 text-purple-700 hover:bg-purple-50"
-            >
-              <Lock className="w-4 h-4" />
-            </Button>
-            <Button
-              onClick={handleArchiveToggle}
-              disabled={isUpdating}
-              variant="outline"
-              size="sm"
-              title={classData.isArchived ? 'Unarchive' : 'Archive'}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              <Archive className="w-4 h-4" />
-            </Button>
-          </>
+      {/* Content Section */}
+      <div className="bg-gradient-to-br from-gray-900 to-black p-6 text-white">
+        {/* Title and Description */}
+        <h3 className="text-xl font-bold text-white mb-2">{classData.name}</h3>
+        {classData.description && (
+          <p className="text-sm text-gray-300 mb-4 line-clamp-2">{classData.description}</p>
         )}
-        
-        {user?.role === 'STUDENT' && !isEnrolled && !classData.isPrivate && !classData.isArchived && onEnroll && (
-          <Button
-            onClick={() => onEnroll(classData.id)}
-            size="sm"
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700"
-          >
-            Enroll
+
+        {/* Professor Info */}
+        <div className="flex items-center mb-4">
+          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">{classData.professor.name}</p>
+            <p className="text-xs text-gray-400">Professor</p>
+          </div>
+        </div>
+
+        {/* Course Details */}
+        <div className="flex items-center justify-between text-sm text-gray-300 mb-4">
+          <span>{classData._count.enrollments} students</span>
+          <span>{classData._count.notes} notes</span>
+          <span>{classData._count.quizzes} quizzes</span>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex space-x-2">
+          <Button asChild className="flex-1 bg-orange-500 hover:bg-orange-600 text-white border-0 text-sm h-10">
+            <Link href={`/classes/${classData.id}`}>
+              <Eye className="w-4 h-4 mr-2" />
+              View
+            </Link>
           </Button>
-        )}
+          
+          {isProfessor && (
+            <>
+              <Button
+                onClick={handlePrivacyToggle}
+                disabled={isUpdating}
+                variant="outline"
+                size="sm"
+                title={classData.isPrivate ? 'Make Public' : 'Make Private'}
+                className="bg-gray-300 border-gray-300 text-gray-700 hover:bg-gray-600 hover:text-white dark:bg-gray-600 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800 h-10 px-3"
+              >
+                <Lock className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={handleArchiveToggle}
+                disabled={isUpdating}
+                variant="outline"
+                size="sm"
+                title={classData.isArchived ? 'Unarchive' : 'Archive'}
+                className="bg-gray-300 border-gray-300 text-gray-700 hover:bg-gray-600 hover:text-white dark:bg-gray-600 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800 h-10 px-3"
+              >
+                <Archive className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          
+          {user?.role === 'STUDENT' && !isEnrolled && !classData.isPrivate && !classData.isArchived && onEnroll && (
+            <Button
+              onClick={() => onEnroll(classData.id)}
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700 h-10"
+            >
+              Enroll
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import BasicClassCard from '@/components/classes/BasicClassCard'
 import CreateClassForm from '@/components/classes/CreateClassForm'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -59,7 +58,6 @@ export default function ClassesPage() {
   const [selectedUniversity, setSelectedUniversity] = useState('')
   const [includeArchived, setIncludeArchived] = useState(false)
   const [includePrivate, setIncludePrivate] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pagination, setPagination] = useState({
     total: 0,
     limit: 20,
@@ -101,35 +99,22 @@ export default function ClassesPage() {
       }
 
       if (!includePrivate) {
-        params.append('includePrivate', 'false')
+        params.append('publicOnly', 'true')
       }
 
-      const response = await fetch(`/api/classes?${params}`)
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to load classes')
+      const response = await fetch(`/api/classes?${params.toString()}`)
+      if (response.ok) {
+        const data: ClassesResponse = await response.json()
+        if (offset === 0) {
+          setClasses(data.classes)
+        } else {
+          setClasses(prev => [...prev, ...data.classes])
+        }
+        setPagination(data.pagination)
       }
-
-      const data: ClassesResponse = await response.json()
-      
-      if (offset === 0) {
-        setClasses(data.classes || [])
-      } else {
-        setClasses(prev => [...prev, ...(data.classes || [])])
-      }
-      
-      setPagination(data.pagination || {
-        total: 0,
-        limit: 20,
-        offset: 0,
-        hasMore: false,
-      })
     } catch (error) {
       console.error('Error loading classes:', error)
-      // Only show error toast on initial load, not on pagination
-      if (offset === 0) {
-        toast.error(error instanceof Error ? error.message : 'Failed to load classes')
-      }
+      toast.error('Failed to load classes')
     } finally {
       setIsLoading(false)
     }
@@ -142,7 +127,8 @@ export default function ClassesPage() {
       const response = await fetch(`/api/enrollments?studentId=${user.id}`)
       if (response.ok) {
         const data = await response.json()
-        setEnrolledClasses(data.enrollments.map((e: any) => e.classId))
+        const enrolledIds = data.enrollments?.map((enrollment: any) => enrollment.class.id) || []
+        setEnrolledClasses(enrolledIds)
       }
     } catch (error) {
       console.error('Error loading enrolled classes:', error)
@@ -156,43 +142,15 @@ export default function ClassesPage() {
   }
 
   const handleLoadMore = () => {
-    const newOffset = pagination.offset + pagination.limit
-    loadClasses(newOffset)
+    if (pagination.hasMore) {
+      loadClasses(pagination.offset + pagination.limit)
+    }
   }
 
   const handleCreateSuccess = () => {
     setIsCreating(false)
-    loadClasses(0)
     toast.success('Class created successfully!')
-  }
-
-  const handleEnroll = async (classId: string) => {
-    if (!user) {
-      toast.error('You must be logged in to enroll in a class')
-      return
-    }
-
-    try {
-      const response = await fetch('/api/enrollments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user.id,
-        },
-        body: JSON.stringify({ classId }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to enroll')
-      }
-
-      setEnrolledClasses(prev => [...prev, classId])
-      toast.success('Successfully enrolled in class!')
-    } catch (error) {
-      console.error('Error enrolling:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to enroll')
-    }
+    loadClasses(0)
   }
 
   const clearFilters = () => {
@@ -204,62 +162,51 @@ export default function ClassesPage() {
     setPagination(prev => ({ ...prev, offset: 0 }))
   }
 
+  const handleEnroll = async (classId: string) => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/enrollments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({
+          classId,
+          studentId: user.id,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('Successfully enrolled in class!')
+        setEnrolledClasses(prev => [...prev, classId])
+      } else {
+        const error = await response.json()
+        toast.error(error.message || 'Failed to enroll in class')
+      }
+    } catch (error) {
+      console.error('Error enrolling in class:', error)
+      toast.error('Failed to enroll in class')
+    }
+  }
+
   if (isCreating) {
     return (
-      <div className="flex h-screen bg-gray-50">
-        <DashboardSidebar 
-          isOpen={sidebarOpen} 
-          onClose={() => setSidebarOpen(false)}
-          userRole={user?.role as 'STUDENT' | 'PROFESSOR' || 'STUDENT'}
-        />
-        
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <DashboardHeader 
-            user={user}
-            onMenuClick={() => setSidebarOpen(true)}
-          />
-          
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-            <div className="container mx-auto px-6 py-8">
-              <div className="mb-6">
-                <Button
-                  onClick={() => setIsCreating(false)}
-                  variant="outline"
-                  className="mb-4"
-                >
-                  ← Back to Classes
-                </Button>
-              </div>
-              <CreateClassForm onSuccess={handleCreateSuccess} onCancel={() => setIsCreating(false)} />
-            </div>
-          </main>
-        </div>
-      </div>
+      <DashboardLayout>
+        <CreateClassForm onSuccess={handleCreateSuccess} onCancel={() => setIsCreating(false)} />
+      </DashboardLayout>
     )
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <DashboardSidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)}
-        userRole={user?.role as 'STUDENT' | 'PROFESSOR' || 'STUDENT'}
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader 
-          user={user}
-          onMenuClick={() => setSidebarOpen(true)}
-        />
-        
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-          <div className="container mx-auto px-6 py-8">
+    <DashboardLayout>
       {/* Header */}
-      <div className="mb-8">
+      <div className="px-6 py-8 mb-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Classes</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Classes</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
               {user?.role === 'PROFESSOR' 
                 ? 'Manage your classes and create new ones'
                 : 'Browse and enroll in classes from top professors'
@@ -267,7 +214,7 @@ export default function ClassesPage() {
             </p>
           </div>
           {user?.role === 'STUDENT' && (
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
               <Link href="/teachers">
                 <Users className="w-4 h-4 mr-2" />
                 Browse Professors
@@ -275,7 +222,7 @@ export default function ClassesPage() {
             </Button>
           )}
           {user?.role === 'PROFESSOR' && (
-            <Button onClick={() => setIsCreating(true)}>
+            <Button onClick={() => setIsCreating(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Create Class
             </Button>
@@ -283,18 +230,18 @@ export default function ClassesPage() {
         </div>
 
         {/* Search and Filters */}
-        <Card>
+        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardContent className="p-6">
             <form onSubmit={handleSearch} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                   <input
                     type="text"
                     placeholder="Search classes by name, code, or professor..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -303,66 +250,104 @@ export default function ClassesPage() {
                     placeholder="Filter by university/college..."
                     value={selectedUniversity}
                     onChange={(e) => setSelectedUniversity(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
                 <div className="flex items-center space-x-4">
-                  <label className="flex items-center space-x-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={includeArchived}
-                      onChange={(e) => setIncludeArchived(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span>Include Archived</span>
-                  </label>
-                  <label className="flex items-center space-x-2 text-sm">
+                  <Button type="submit" className="bg-orange-500 hover:bg-orange-600 text-white">
+                    <Search className="w-4 h-4 mr-2" />
+                    Search
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear
+                  </Button>
+                </div>
+              </div>
+
+              {/* Additional Filters */}
+              <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={includeArchived}
+                    onChange={(e) => setIncludeArchived(e.target.checked)}
+                    className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                  />
+                  <span className="text-sm text-gray-900 dark:text-white">Include archived classes</span>
+                </label>
+                {user?.role === 'STUDENT' && (
+                  <label className="flex items-center space-x-2">
                     <input
                       type="checkbox"
                       checked={includePrivate}
                       onChange={(e) => setIncludePrivate(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
                     />
-                    <span>Include Private</span>
+                    <span className="text-sm text-gray-900 dark:text-white">Include private classes</span>
                   </label>
-                </div>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? <LoadingSpinner size="sm" /> : 'Search'}
-                </Button>
+                )}
               </div>
 
-              {(searchQuery || selectedProfessor || selectedUniversity) && (
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Active filters:</span>
+              {/* Active Filters */}
+              {(searchQuery || selectedProfessor || selectedUniversity || includeArchived || !includePrivate) && (
+                <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Active filters:</span>
                   {searchQuery && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                      Search: {searchQuery}
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">
+                      Search: "{searchQuery}"
                       <button
                         onClick={() => setSearchQuery('')}
-                        className="ml-1 hover:text-primary-600"
+                        className="ml-1 hover:text-orange-600 dark:hover:text-orange-300"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   )}
                   {selectedProfessor && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
                       Professor: {selectedProfessor}
                       <button
                         onClick={() => setSelectedProfessor('')}
-                        className="ml-1 hover:text-primary-600"
+                        className="ml-1 hover:text-purple-600 dark:hover:text-purple-300"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   )}
                   {selectedUniversity && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
                       University: {selectedUniversity}
                       <button
                         onClick={() => setSelectedUniversity('')}
-                        className="ml-1 hover:text-primary-600"
+                        className="ml-1 hover:text-blue-600 dark:hover:text-blue-300"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {includeArchived && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-200">
+                      Archived classes included
+                      <button
+                        onClick={() => setIncludeArchived(false)}
+                        className="ml-1 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {!includePrivate && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                      Public classes only
+                      <button
+                        onClick={() => setIncludePrivate(true)}
+                        className="ml-1 hover:text-green-600 dark:hover:text-green-300"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -373,6 +358,7 @@ export default function ClassesPage() {
                     variant="ghost"
                     size="sm"
                     onClick={clearFilters}
+                    className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   >
                     Clear all
                   </Button>
@@ -384,66 +370,66 @@ export default function ClassesPage() {
       </div>
 
       {/* Classes Grid */}
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <LoadingSpinner size="lg" />
-        </div>
-      ) : classes.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-                          <div className="text-gray-500">
+      <div className="px-6 pb-8">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : classes.length === 0 ? (
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <CardContent className="p-12 text-center">
+              <div className="text-gray-500 dark:text-gray-400">
                 <h3 className="text-lg font-medium mb-2">
                   {searchQuery || selectedProfessor ? 'No classes found' : 'Welcome to Classora.in!'}
                 </h3>
                 <p>
-                                  {searchQuery || selectedProfessor || selectedUniversity
-                  ? 'Try adjusting your search criteria to find more classes'
-                  : user?.role === 'PROFESSOR'
-                    ? 'Create your first class to start teaching and sharing knowledge with students'
-                    : 'Browse and enroll in classes from top professors to enhance your learning journey'
+                  {searchQuery || selectedProfessor || selectedUniversity
+                    ? 'Try adjusting your search criteria to find more classes'
+                    : user?.role === 'PROFESSOR'
+                      ? 'Create your first class to start teaching and sharing knowledge with students'
+                      : 'Browse and enroll in classes from top professors to enhance your learning journey'
                   }
                 </p>
                 {!searchQuery && !selectedProfessor && !selectedUniversity && user?.role === 'PROFESSOR' && (
                   <div className="mt-4">
-                    <Button onClick={() => setIsCreating(true)}>
+                    <Button onClick={() => setIsCreating(true)} className="bg-orange-500 hover:bg-orange-600 text-white">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Your First Class
                     </Button>
                   </div>
                 )}
               </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {classes.map((classData) => (
-              <BasicClassCard
-                key={classData.id}
-                classData={classData}
-                onEnroll={handleEnroll}
-                isEnrolled={enrolledClasses.includes(classData.id)}
-                onUpdate={() => loadClasses(0)}
-              />
-            ))}
-          </div>
-
-          {pagination.hasMore && (
-            <div className="text-center">
-              <Button
-                onClick={handleLoadMore}
-                variant="outline"
-                disabled={isLoading}
-              >
-                {isLoading ? <LoadingSpinner size="sm" /> : 'Load More Classes'}
-              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {classes.map((classData) => (
+                <BasicClassCard
+                  key={classData.id}
+                  classData={classData}
+                  onEnroll={handleEnroll}
+                  isEnrolled={enrolledClasses.includes(classData.id)}
+                  onUpdate={() => loadClasses(0)}
+                />
+              ))}
             </div>
-          )}
-        </>
-      )}
-          </div>
-        </main>
+
+            {pagination.hasMore && (
+              <div className="text-center">
+                <Button
+                  onClick={handleLoadMore}
+                  variant="outline"
+                  disabled={isLoading}
+                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  {isLoading ? <LoadingSpinner size="sm" /> : 'Load More Classes'}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
