@@ -36,6 +36,7 @@ export function DashboardSidebar({
     { href: '/dashboard/notes', label: 'Notes', icon: BookOpen },
     { href: '/dashboard/assignments', label: 'Assignments', icon: FileText },
     { href: '/dashboard/quizzes', label: 'Quizzes', icon: Code },
+    { href: '/dashboard/practice', label: 'Practice', icon: Target },
     { href: '/dashboard/students', label: 'Students', icon: Users },
     { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
     { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
