@@ -383,7 +383,7 @@ export default function TeachersPage() {
                                     {user?.role === 'STUDENT' && (
                                       <Button
                                         size="sm"
-                                        variant={enrolledClasses.includes(cls.id) ? "outline" : "default"}
+                                        variant={enrolledClasses.includes(cls.id) ? "outline" : "primary"}
                                         disabled={enrolledClasses.includes(cls.id)}
                                         onClick={() => handleEnroll(cls.id)}
                                       >

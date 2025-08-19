@@ -216,21 +216,21 @@ export default function AdminCrashes() {
                 </div>
                 <div className="flex space-x-2">
                   <Button
-                    variant={filter === 'all' ? 'default' : 'outline'}
+                    variant={filter === 'all' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setFilter('all')}
                   >
                     All
                   </Button>
                   <Button
-                    variant={filter === 'unresolved' ? 'default' : 'outline'}
+                    variant={filter === 'unresolved' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setFilter('unresolved')}
                   >
                     Unresolved
                   </Button>
                   <Button
-                    variant={filter === 'resolved' ? 'default' : 'outline'}
+                    variant={filter === 'resolved' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setFilter('resolved')}
                   >

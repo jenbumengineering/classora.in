@@ -212,28 +212,28 @@ export default function AdminUsers() {
                 </div>
                 <div className="flex space-x-2">
                   <Button
-                    variant={filter === 'all' ? 'default' : 'outline'}
+                    variant={filter === 'all' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setFilter('all')}
                   >
                     All
                   </Button>
                   <Button
-                    variant={filter === 'active' ? 'default' : 'outline'}
+                    variant={filter === 'active' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setFilter('active')}
                   >
                     Active
                   </Button>
                   <Button
-                    variant={filter === 'inactive' ? 'default' : 'outline'}
+                    variant={filter === 'inactive' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setFilter('inactive')}
                   >
                     Inactive
                   </Button>
                   <Button
-                    variant={filter === 'suspended' ? 'default' : 'outline'}
+                    variant={filter === 'suspended' ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setFilter('suspended')}
                   >

@@ -278,28 +278,28 @@ export default function AdminMessages() {
                   </div>
                   <div className="flex space-x-2">
                     <Button
-                      variant={filter === 'all' ? 'default' : 'outline'}
+                      variant={filter === 'all' ? 'primary' : 'outline'}
                       size="sm"
                       onClick={() => setFilter('all')}
                     >
                       All
                     </Button>
                     <Button
-                      variant={filter === 'unread' ? 'default' : 'outline'}
+                      variant={filter === 'unread' ? 'primary' : 'outline'}
                       size="sm"
                       onClick={() => setFilter('unread')}
                     >
                       Unread
                     </Button>
                     <Button
-                      variant={filter === 'read' ? 'default' : 'outline'}
+                      variant={filter === 'read' ? 'primary' : 'outline'}
                       size="sm"
                       onClick={() => setFilter('read')}
                     >
                       Read
                     </Button>
                     <Button
-                      variant={filter === 'replied' ? 'default' : 'outline'}
+                      variant={filter === 'replied' ? 'primary' : 'outline'}
                       size="sm"
                       onClick={() => setFilter('replied')}
                     >

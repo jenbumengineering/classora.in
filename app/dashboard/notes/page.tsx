@@ -188,7 +188,7 @@ export default function NotesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">
-                    <RichTextRenderer content={note.content} maxLength={150} />
+                    <RichTextRenderer content={note.content} />
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500 dark:text-gray-400">

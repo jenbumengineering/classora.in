@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { SunEditorComponent } from '@/components/ui/SunEditor'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -41,6 +42,10 @@ export default function CreateClassForm({ onSuccess, onCancel }: CreateClassForm
   ]
   const router = useRouter()
   const { user } = useAuth()
+
+  const handleDescriptionChange = useCallback((description: string) => {
+    setFormData(prev => ({ ...prev, description }))
+  }, [])
 
   const handleImageUpload = async (file: File) => {
     if (!file) return
@@ -209,13 +214,9 @@ export default function CreateClassForm({ onSuccess, onCancel }: CreateClassForm
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
-                <textarea
-                  id="description"
-                  name="description"
+                <SunEditorComponent
                   value={formData.description}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  onChange={handleDescriptionChange}
                   placeholder="Describe what students will learn in this class..."
                 />
               </div>
