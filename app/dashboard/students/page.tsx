@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { Users, Search, Mail, GraduationCap, BarChart3 } from 'lucide-react'
+import { Avatar } from '@/lib/avatar'
 import Link from 'next/link'
 
 interface Student {
@@ -129,11 +130,11 @@ export default function StudentsPage() {
               <Card key={student.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader>
                   <div className="flex items-center space-x-4">
-                    <div className="h-12 w-12 bg-orange-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-lg">
-                        {student.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
+                    <Avatar 
+                      src={student.avatar} 
+                      alt={student.name} 
+                      size="lg"
+                    />
                     <div className="flex-1">
                       <CardTitle className="text-gray-900 dark:text-white">{student.name}</CardTitle>
                       <CardDescription className="text-gray-600 dark:text-gray-400">{student.email}</CardDescription>

@@ -9,6 +9,7 @@ const updateProfileSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   email: z.string().email('Invalid email format').optional(),
   bio: z.string().optional(),
+  avatar: z.string().optional(),
   currentPassword: z.string().optional(),
   newPassword: z.string().min(8, 'Password must be at least 8 characters').optional(),
   teacherProfile: z.object({
@@ -44,7 +45,14 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        bio: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
         teacherProfile: {
           select: {
             university: true,
@@ -124,6 +132,7 @@ export async function PUT(request: NextRequest) {
     if (validatedData.name !== undefined) updateData.name = validatedData.name
     if (validatedData.email !== undefined) updateData.email = validatedData.email
     if (validatedData.bio !== undefined) updateData.bio = validatedData.bio
+    if (validatedData.avatar !== undefined) updateData.avatar = validatedData.avatar
 
     // Handle password change if provided
     if (validatedData.currentPassword && validatedData.newPassword) {
@@ -146,7 +155,14 @@ export async function PUT(request: NextRequest) {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        bio: true,
+        avatar: true,
+        role: true,
+        createdAt: true,
         teacherProfile: {
           select: {
             university: true,

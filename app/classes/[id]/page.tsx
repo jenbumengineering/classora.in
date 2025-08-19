@@ -35,6 +35,7 @@ import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import toast from 'react-hot-toast'
+import { Avatar } from '@/lib/avatar'
 
 interface Note {
   id: string
@@ -642,17 +643,12 @@ export default function ClassPage() {
                     <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                       <CardContent className="p-6">
                         <div className="flex items-start space-x-6">
-                          <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center">
-                            {classData.professor.avatar ? (
-                              <img 
-                                src={classData.professor.avatar} 
-                                alt={classData.professor.name}
-                                className="w-20 h-20 rounded-full object-cover"
-                              />
-                            ) : (
-                            <User className="w-10 h-10 text-white" />
-                            )}
-                          </div>
+                          <Avatar 
+                            src={classData.professor.avatar} 
+                            alt={classData.professor.name} 
+                            size="xl"
+                            className="w-20 h-20"
+                          />
                           <div className="flex-1">
                             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{classData.professor.name}</h3>
                             <p className="text-gray-600 dark:text-gray-400 mb-4">{classData.professor.email}</p>

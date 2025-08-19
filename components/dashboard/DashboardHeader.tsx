@@ -16,6 +16,7 @@ import {
   ChevronDown
 } from 'lucide-react'
 import Link from 'next/link'
+import { Avatar } from '@/lib/avatar'
 
 interface DashboardHeaderProps {
   user: any
@@ -243,11 +244,11 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
               onClick={handleUserMenuToggle}
               className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
-              <div className="h-8 w-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              <Avatar 
+                src={user?.avatar} 
+                alt={user?.name || 'User'} 
+                size="sm"
+              />
               <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {user?.name}
               </span>
@@ -258,8 +259,17 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
             {userMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
                 <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
+                  <div className="flex items-center space-x-3">
+                    <Avatar 
+                      src={user?.avatar} 
+                      alt={user?.name || 'User'} 
+                      size="sm"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
+                    </div>
+                  </div>
                 </div>
                 
                 <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">

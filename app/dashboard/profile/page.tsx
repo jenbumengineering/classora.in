@@ -7,7 +7,9 @@ import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { User, Mail, Phone, MapPin, Edit, Save, X } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Edit, Save, X, Upload, Camera } from 'lucide-react'
+import { Avatar } from '@/lib/avatar'
+import { toast } from 'react-hot-toast'
 
 interface UserProfile {
   id: string
@@ -56,6 +58,8 @@ export default function ProfilePage() {
     phone: '',
     address: ''
   })
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -199,6 +203,79 @@ export default function ProfilePage() {
     }
   }
 
+  const handleImageUpload = async (file: File) => {
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please select a valid image file (JPEG, PNG, GIF, or WebP)')
+      return
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB')
+      return
+    }
+
+    setIsUploadingImage(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload-profile-image', {
+        method: 'POST',
+        headers: {
+          'x-user-id': user?.id || '',
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to upload image')
+      }
+
+      const data = await response.json()
+      
+      // Update profile with new avatar URL
+      const updateResponse = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || '',
+        },
+        body: JSON.stringify({
+          avatar: data.url
+        }),
+      })
+
+      if (updateResponse.ok) {
+        setImagePreview(data.url)
+        if (profile) {
+          setProfile({ ...profile, avatar: data.url })
+        }
+        toast.success('Profile image updated successfully!')
+      } else {
+        throw new Error('Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image')
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleImageUpload(file)
+    }
+  }
+
   const handleCancel = () => {
     if (profile) {
       setEditForm({
@@ -215,6 +292,7 @@ export default function ProfilePage() {
         address: profile.teacherProfile?.address || profile.studentProfile?.address || ''
       })
     }
+    setImagePreview(null)
     setIsEditing(false)
   }
 
@@ -269,12 +347,44 @@ export default function ProfilePage() {
                   <CardContent className="space-y-6">
                     {/* Avatar Section */}
                     <div className="flex items-center space-x-4">
-                      <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="w-10 h-10 text-gray-400" />
+                      <div className="relative">
+                        <Avatar 
+                          src={imagePreview || profile?.avatar} 
+                          alt={profile?.name || 'User'} 
+                          size="xl"
+                          className="w-20 h-20"
+                        />
+                        {isEditing && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="hidden"
+                                disabled={isUploadingImage}
+                              />
+                              <div className="w-20 h-20 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                {isUploadingImage ? (
+                                  <div className="text-white">
+                                    <LoadingSpinner size="sm" />
+                                  </div>
+                                ) : (
+                                  <Camera className="w-6 h-6 text-white" />
+                                )}
+                              </div>
+                            </label>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <h3 className="text-lg font-medium">{profile?.name}</h3>
                         <p className="text-gray-600">{profile?.role}</p>
+                        {isEditing && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            Click on the avatar to upload a new image
+                          </p>
+                        )}
                       </div>
                     </div>
 
