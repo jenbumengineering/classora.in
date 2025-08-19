@@ -206,6 +206,7 @@ export default function ClassPage() {
       const quizzesResponse = await fetch(`/api/quizzes?classId=${classId}&status=PUBLISHED`)
       if (quizzesResponse.ok) {
         const quizzesData = await quizzesResponse.json()
+        console.log('Loaded quizzes:', quizzesData.quizzes?.map((q: any) => ({ id: q.id, title: q.title, noteId: q.noteId })))
         setQuizzes(quizzesData.quizzes || [])
       }
 
@@ -213,6 +214,7 @@ export default function ClassPage() {
       const assignmentsResponse = await fetch(`/api/assignments?classId=${classId}&status=PUBLISHED`)
       if (assignmentsResponse.ok) {
         const assignmentsData = await assignmentsResponse.json()
+        console.log('Loaded assignments:', assignmentsData.assignments?.map((a: any) => ({ id: a.id, title: a.title, noteId: a.noteId })))
         setAssignments(assignmentsData.assignments || [])
       }
     } catch (error) {
@@ -458,7 +460,7 @@ export default function ClassPage() {
                         <CardContent>
                           {notes.length > 0 ? (
                             <div className="space-y-3">
-                              {notes.map((note) => {
+                                                            {notes.map((note) => {
                                 const noteQuizzes = quizzes.filter(quiz => quiz.noteId === note.id)
                                 const noteAssignments = assignments.filter(assignment => assignment.noteId === note.id)
                                 const isExpanded = expandedNotes.has(note.id)
