@@ -25,7 +25,9 @@ import {
   Download,
   Award,
   Clock,
-  User
+  User,
+  Code,
+  List
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
@@ -427,109 +429,111 @@ export default function ClassPage() {
                 {activeTab === 'curriculum' && (
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Class Curriculum</h2>
-                    <div className="space-y-6">
-                      {/* Notes Section */}
-                      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                        <CardHeader>
-                          <CardTitle className="text-gray-900 dark:text-white">Notes</CardTitle>
-                          <CardDescription className="text-gray-600 dark:text-gray-400">
-                            {classData._count.quizzes} quizzes • {classData._count.assignments} assignments
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          {notes.length > 0 ? (
-                            <div className="space-y-3">
-                              {notes.map((note) => (
-                                <div key={note.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                  <div className="flex items-center">
-                                    <BookOpen className="w-5 h-5 text-orange-500 mr-3" />
-                                    <span className="text-gray-900 dark:text-gray-300">{note.title}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-4">
-                                    <span className="text-gray-500 dark:text-gray-400 text-sm">
-                                      {formatDate(note.createdAt)}
-                                    </span>
-                                    <Button asChild variant="outline" size="sm">
-                                      <Link href={`/dashboard/notes/${note.id}`}>
-                                        View
-                                      </Link>
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                              <BookOpen className="h-8 w-8 mx-auto mb-2" />
-                              <p>No notes available yet</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                    
+                    {/* Header with counts */}
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        {classData.name}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {classData._count.quizzes} Quizzes • {classData._count.assignments} Assignments
+                      </p>
+                    </div>
 
+                    <div className="space-y-8">
                       {/* Quizzes Section */}
                       {quizzes.length > 0 && (
-                        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                          <CardHeader>
-                            <CardTitle className="text-gray-900 dark:text-white">Quizzes</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-3">
-                              {quizzes.map((quiz) => (
-                                <div key={quiz.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                  <div className="flex items-center">
-                                    <FileText className="w-5 h-5 text-orange-500 mr-3" />
-                                    <span className="text-gray-900 dark:text-gray-300">{quiz.title}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-4">
-                                    <span className="text-gray-500 dark:text-gray-400 text-sm">{quiz.totalQuestions} questions</span>
-                                    {quiz.timeLimit && (
-                                      <span className="text-gray-500 dark:text-gray-400 text-sm">{quiz.timeLimit} min</span>
-                                    )}
-                                    <Button asChild variant="outline" size="sm">
-                                      <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                                        View
-                                      </Link>
-                                    </Button>
-                                  </div>
+                        <div>
+                          <div className="flex items-center mb-4">
+                            <Code className="w-5 h-5 text-orange-500 mr-2" />
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quizzes</h3>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {quizzes.map((quiz) => (
+                              <div key={quiz.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
+                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                  {quiz.title}
+                                </h4>
+                                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                  <p>{quiz.totalQuestions} Questions</p>
+                                  {quiz.timeLimit && (
+                                    <p>{quiz.timeLimit} Minutes</p>
+                                  )}
                                 </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
+                                <div className="mt-3">
+                                  <Button asChild variant="outline" size="sm" className="w-full">
+                                    <Link href={`/dashboard/quizzes/${quiz.id}`}>
+                                      View Quiz
+                                    </Link>
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
 
                       {/* Assignments Section */}
                       {assignments.length > 0 && (
-                        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                          <CardHeader>
-                            <CardTitle className="text-gray-900 dark:text-white">Assignments</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-3">
-                              {assignments.map((assignment) => (
-                                <div key={assignment.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                  <div className="flex items-center">
-                                    <Calendar className="w-5 h-5 text-orange-500 mr-3" />
-                                    <span className="text-gray-900 dark:text-gray-300">{assignment.title}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-4">
-                                    {assignment.dueDate && (
-                                      <span className="text-gray-500 dark:text-gray-400 text-sm">Due {formatDate(assignment.dueDate)}</span>
-                                    )}
-                                    <Button asChild variant="outline" size="sm">
-                                      <Link href={`/dashboard/assignments/${assignment.id}`}>
-                                        View
-                                      </Link>
-                                    </Button>
-                                  </div>
+                        <div>
+                          <div className="flex items-center mb-4">
+                            <List className="w-5 h-5 text-orange-500 mr-2" />
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Assignments</h3>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {assignments.map((assignment) => (
+                              <div key={assignment.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
+                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                  {assignment.title}
+                                </h4>
+                                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                  {assignment.dueDate && (
+                                    <p>Due date {formatDate(assignment.dueDate)}</p>
+                                  )}
                                 </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
+                                <div className="mt-3">
+                                  <Button asChild variant="outline" size="sm" className="w-full">
+                                    <Link href={`/dashboard/assignments/${assignment.id}`}>
+                                      View Assignment
+                                    </Link>
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
 
+                      {/* Notes Section */}
+                      {notes.length > 0 && (
+                        <div>
+                          <div className="flex items-center mb-4">
+                            <BookOpen className="w-5 h-5 text-orange-500 mr-2" />
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notes</h3>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {notes.map((note) => (
+                              <div key={note.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
+                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                  {note.title}
+                                </h4>
+                                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                  <p>{formatDate(note.createdAt)}</p>
+                                </div>
+                                <div className="mt-3">
+                                  <Button asChild variant="outline" size="sm" className="w-full">
+                                    <Link href={`/dashboard/notes/${note.id}`}>
+                                      View Note
+                                    </Link>
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Empty State */}
                       {quizzes.length === 0 && assignments.length === 0 && notes.length === 0 && (
                         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                           <CardContent className="text-center py-8">
