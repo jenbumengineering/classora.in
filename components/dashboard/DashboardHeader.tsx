@@ -29,8 +29,13 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
   const { unreadCounts, markAllContentAsViewed } = useUnreadContent()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [showSearchResults, setShowSearchResults] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = async () => {
     try {
@@ -56,6 +61,65 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
 
   const handleUserMenuToggle = () => {
     setUserMenuOpen(!userMenuOpen)
+  }
+
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([])
+      setShowSearchResults(false)
+      return
+    }
+
+    setIsSearching(true)
+    try {
+      const response = await fetch(`/api/search?query=${encodeURIComponent(query)}&userId=${user?.id}`, {
+        headers: {
+          'x-user-id': user?.id,
+        },
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setSearchResults(data.results || [])
+        setShowSearchResults(true)
+      } else {
+        setSearchResults([])
+      }
+    } catch (error) {
+      console.error('Search error:', error)
+      setSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value
+    setSearchQuery(query)
+    
+    // Debounce search
+    const timeoutId = setTimeout(() => {
+      handleSearch(query)
+    }, 300)
+    
+    return () => clearTimeout(timeoutId)
+  }
+
+  const handleSearchResultClick = (result: any) => {
+    setSearchQuery('')
+    setSearchResults([])
+    setShowSearchResults(false)
+    
+    // Navigate based on result type
+    if (result.type === 'class') {
+      window.location.href = `/classes/${result.id}`
+    } else if (result.type === 'note') {
+      window.location.href = `/dashboard/notes/${result.id}`
+    } else if (result.type === 'quiz') {
+      window.location.href = `/dashboard/quizzes/${result.id}`
+    } else if (result.type === 'assignment') {
+      window.location.href = `/dashboard/assignments/${result.id}`
+    }
   }
 
   const handleMarkAllAsRead = async () => {
@@ -96,6 +160,9 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false)
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false)
+      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
@@ -119,13 +186,59 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
           </Button>
           
           <div className="hidden md:flex items-center space-x-2">
-            <div className="relative">
+            <div className="relative" ref={searchRef}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search classes, notes, quizzes..."
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                onFocus={() => searchQuery && setShowSearchResults(true)}
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent w-64"
               />
+              
+              {/* Search Results Dropdown */}
+              {showSearchResults && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
+                  {isSearching ? (
+                    <div className="px-4 py-3 text-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500 mx-auto"></div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Searching...</p>
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div>
+                      {searchResults.map((result, index) => (
+                        <div
+                          key={`${result.type}-${result.id}-${index}`}
+                          className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                          onClick={() => handleSearchResultClick(result)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              {result.type === 'class' && '📚'}
+                              {result.type === 'note' && '📝'}
+                              {result.type === 'quiz' && '🧪'}
+                              {result.type === 'assignment' && '📋'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {result.title}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                                {result.type}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : searchQuery && (
+                    <div className="px-4 py-3 text-center">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No results found</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
