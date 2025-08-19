@@ -100,8 +100,8 @@ export default function CreatePracticeQuestionPage() {
       difficulty: 'MEDIUM',
       points: 10,
       options: [
-        { text: '', isCorrect: false, explanation: '' },
-        { text: '', isCorrect: false, explanation: '' }
+        { text: 'Option 1', isCorrect: false, explanation: '' },
+        { text: 'Option 2', isCorrect: false, explanation: '' }
       ]
     }
     setQuestions([...questions, newQuestion])
@@ -118,10 +118,10 @@ export default function CreatePracticeQuestionPage() {
         
         // Initialize options when switching to multiple choice or multiple selection
         if (updates.type === 'MULTIPLE_CHOICE' || updates.type === 'MULTIPLE_SELECTION') {
-          if (!updatedQuestion.options || updatedQuestion.options.length === 0) {
+          if (!updatedQuestion.options || updatedQuestion.options.length < 2) {
             updatedQuestion.options = [
-              { text: '', isCorrect: false, explanation: '' },
-              { text: '', isCorrect: false, explanation: '' }
+              { text: 'Option 1', isCorrect: false, explanation: '' },
+              { text: 'Option 2', isCorrect: false, explanation: '' }
             ]
           }
         }
@@ -153,6 +153,10 @@ export default function CreatePracticeQuestionPage() {
     setQuestions(questions.map(q => {
       if (q.id === questionId && q.options) {
         const newOptions = q.options.filter((_, index) => index !== optionIndex)
+        // Ensure we always have at least 2 options
+        if (newOptions.length < 2) {
+          return q // Don't remove if it would result in less than 2 options
+        }
         return { ...q, options: newOptions }
       }
       return q
@@ -227,37 +231,40 @@ export default function CreatePracticeQuestionPage() {
     }
 
     // Validate all questions
-    for (const question of questions) {
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i]
+      const questionNumber = i + 1
+      
       if (!question.title.trim()) {
-        toast.error('All questions must have a title')
+        toast.error(`Question ${questionNumber}: Please enter a title`)
         return
       }
 
       if (!question.content.trim()) {
-        toast.error('All questions must have content')
+        toast.error(`Question ${questionNumber}: Please enter content`)
         return
       }
 
       if (['MULTIPLE_CHOICE', 'MULTIPLE_SELECTION', 'TRUE_FALSE'].includes(question.type)) {
         if (!question.options || question.options.length < 2) {
-          toast.error('Multiple choice/selection questions must have at least 2 options')
+          toast.error(`Question ${questionNumber}: Multiple choice/selection questions must have at least 2 options`)
           return
         }
 
         const validOptions = question.options.filter(opt => opt.text.trim())
         if (validOptions.length < 2) {
-          toast.error('All options must have text')
+          toast.error(`Question ${questionNumber}: All options must have text`)
           return
         }
 
         const correctOptions = validOptions.filter(opt => opt.isCorrect)
         if (correctOptions.length === 0) {
-          toast.error('Please select at least one correct answer for each question')
+          toast.error(`Question ${questionNumber}: Please select at least one correct answer`)
           return
         }
 
         if (question.type === 'MULTIPLE_CHOICE' && correctOptions.length > 1) {
-          toast.error('Multiple choice questions can only have one correct answer')
+          toast.error(`Question ${questionNumber}: Multiple choice questions can only have one correct answer`)
           return
         }
       }
@@ -277,7 +284,11 @@ export default function CreatePracticeQuestionPage() {
           points: question.points,
           timeLimit: question.timeLimit,
           options: ['MULTIPLE_CHOICE', 'MULTIPLE_SELECTION', 'TRUE_FALSE'].includes(question.type) 
-            ? question.options?.filter(opt => opt.text.trim())
+            ? question.options?.filter(opt => opt.text.trim()).map(opt => ({
+                text: opt.text.trim(),
+                isCorrect: opt.isCorrect,
+                explanation: opt.explanation || ''
+              }))
             : undefined
         }
 
