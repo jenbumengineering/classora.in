@@ -25,6 +25,7 @@ interface Assignment {
   title: string
   description: string
   classId: string
+  noteId: string | null
   dueDate: string | null
   category: string | null
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED'
@@ -36,6 +37,13 @@ interface Assignment {
   }
 }
 
+interface Note {
+  id: string
+  title: string
+  content: string
+  status: 'DRAFT' | 'PUBLISHED' | 'PRIVATE'
+}
+
 export default function EditAssignmentPage() {
   const router = useRouter()
   const params = useParams()
@@ -44,12 +52,15 @@ export default function EditAssignmentPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingAssignment, setIsLoadingAssignment] = useState(true)
   const [classes, setClasses] = useState<Class[]>([])
+  const [notes, setNotes] = useState<Note[]>([])
   const [isLoadingClasses, setIsLoadingClasses] = useState(true)
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false)
   const [assignment, setAssignment] = useState<Assignment | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     classId: '',
+    noteId: '',
     dueDate: '',
     category: '',
     status: 'DRAFT' as 'DRAFT' | 'PUBLISHED' | 'CLOSED'
@@ -83,10 +94,16 @@ export default function EditAssignmentPage() {
           title: data.title,
           description: data.description || '',
           classId: data.classId,
+          noteId: data.noteId || '',
           dueDate: data.dueDate ? new Date(data.dueDate).toISOString().slice(0, 16) : '',
           category: data.category || '',
           status: data.status
         })
+        
+        // Load notes for the selected class
+        if (data.classId) {
+          loadNotes(data.classId)
+        }
         setCurrentFileUrl(data.fileUrl)
       } else {
         toast.error('Failed to load assignment')
@@ -116,6 +133,30 @@ export default function EditAssignmentPage() {
       console.error('Error loading classes:', error)
     } finally {
       setIsLoadingClasses(false)
+    }
+  }
+
+  const loadNotes = async (classId: string) => {
+    if (!classId) {
+      setNotes([])
+      return
+    }
+
+    setIsLoadingNotes(true)
+    try {
+      const response = await fetch(`/api/notes?classId=${classId}&professorId=${user?.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setNotes(data.notes || [])
+      } else {
+        console.error('Failed to load notes')
+        setNotes([])
+      }
+    } catch (error) {
+      console.error('Error loading notes:', error)
+      setNotes([])
+    } finally {
+      setIsLoadingNotes(false)
     }
   }
 
@@ -208,6 +249,7 @@ export default function EditAssignmentPage() {
         title: formData.title.trim(),
         description: formData.description || '',
         classId: formData.classId,
+        noteId: formData.noteId || undefined,
         dueDate: formData.dueDate || undefined,
         status: status || formData.status, // Use the passed status or fall back to form data
         fileUrl: fileUrl || undefined,
@@ -405,7 +447,10 @@ export default function EditAssignmentPage() {
                       ) : (
                         <select
                           value={formData.classId}
-                          onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, classId: e.target.value, noteId: '' })
+                            loadNotes(e.target.value)
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           required
                         >
@@ -417,6 +462,35 @@ export default function EditAssignmentPage() {
                           ))}
                         </select>
                       )}
+                    </div>
+
+                    {/* Note Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Related Note (Optional)
+                      </label>
+                      {isLoadingNotes ? (
+                        <div className="flex items-center space-x-2">
+                          <LoadingSpinner size="sm" />
+                          <span className="text-sm text-gray-600">Loading notes...</span>
+                        </div>
+                      ) : (
+                        <select
+                          value={formData.noteId}
+                          onChange={(e) => setFormData({ ...formData, noteId: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">No note selected</option>
+                          {notes.map(note => (
+                            <option key={note.id} value={note.id}>
+                              {note.title} ({note.status})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Select a note to link this assignment to specific course material
+                      </p>
                     </div>
 
                     {/* Category */}

@@ -7,6 +7,7 @@ const updateAssignmentSchema = z.object({
   title: z.string().min(1, 'Title is required').optional(),
   description: z.string().optional(),
   classId: z.string().min(1, 'Class ID is required').optional(),
+  noteId: z.string().optional(),
   dueDate: z.string().optional(), // ISO string
   status: z.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).optional(),
   fileUrl: z.string().optional(),
@@ -170,6 +171,20 @@ export async function PUT(
       }
     }
 
+    // Verify the note exists and belongs to the professor (if noteId is provided)
+    if (validatedData.noteId) {
+      const noteData = await prisma.note.findUnique({
+        where: { id: validatedData.noteId, professorId }
+      })
+
+      if (!noteData) {
+        return NextResponse.json(
+          { error: 'Note not found or access denied' },
+          { status: 404 }
+        )
+      }
+    }
+
     // Update the assignment
     const updatedAssignment = await prisma.assignment.update({
       where: { id: assignmentId },
@@ -177,6 +192,7 @@ export async function PUT(
         ...(validatedData.title && { title: validatedData.title }),
         ...(validatedData.description !== undefined && { description: validatedData.description }),
         ...(validatedData.classId && { classId: validatedData.classId }),
+        ...(validatedData.noteId !== undefined && { noteId: validatedData.noteId }),
         ...(validatedData.dueDate && { dueDate: new Date(validatedData.dueDate) }),
         ...(validatedData.status && { status: validatedData.status }),
         ...(validatedData.fileUrl !== undefined && { fileUrl: validatedData.fileUrl }),
