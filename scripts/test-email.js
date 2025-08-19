@@ -3,11 +3,11 @@ const nodemailer = require('nodemailer');
 // Test email configuration
 const emailConfig = {
   host: '173.249.24.112',
-  port: 25,
+  port: 587,
   secure: false,
   auth: {
-    user: 'classora-noreply',
-    pass: 'Classora2024!'
+    user: 'smtp-auth@classora.in',
+    pass: 'ClassoraSMTP2024!'
   },
   tls: {
     rejectUnauthorized: false
@@ -15,7 +15,7 @@ const emailConfig = {
   debug: true,
   logger: true,
   requireTLS: false,
-  ignoreTLS: true
+  ignoreTLS: false
 };
 
 async function testEmail() {
@@ -30,8 +30,8 @@ async function testEmail() {
     await transporter.verify();
     console.log('✓ Connection verified successfully');
     
-    // Send test email
-    console.log('Sending test email...');
+    // Send test email to external address
+    console.log('Sending test email to external address...');
     const info = await transporter.sendMail({
       from: '"Classora" <noreply@classora.in>',
       to: 'mainong.jenbum@gmail.com',
@@ -45,9 +45,12 @@ async function testEmail() {
       `
     });
     
-    console.log('✓ Email sent successfully');
+    console.log('✓ Email sent successfully to external address');
     console.log('Message ID:', info.messageId);
     console.log('Response:', info.response);
+    
+    console.log('\n✓ External email sending is now configured and working!');
+    console.log('The application can now send emails to external users.');
     
   } catch (error) {
     console.error('✗ Email test failed:', error);

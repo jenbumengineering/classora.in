@@ -1,13 +1,13 @@
 import nodemailer from 'nodemailer'
 
-// Email configuration - Using VPS mail server
+// Email configuration - Using VPS mail server with SMTP auth
 const emailConfig = {
   host: '173.249.24.112',
-  port: 25,
+  port: 587,
   secure: false,
   auth: {
-    user: 'classora-noreply',
-    pass: 'Classora2024!'
+    user: 'smtp-auth@classora.in',
+    pass: 'ClassoraSMTP2024!'
   },
   tls: {
     rejectUnauthorized: false
@@ -15,7 +15,7 @@ const emailConfig = {
   debug: true, // Enable debug to see what's happening
   logger: true,
   requireTLS: false,
-  ignoreTLS: true
+  ignoreTLS: false
 }
 
 // Create transporter

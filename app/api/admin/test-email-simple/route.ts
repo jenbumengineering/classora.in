@@ -34,27 +34,27 @@ export async function POST(request: NextRequest) {
     // Test multiple configurations
     const configs = [
       {
-        name: 'VPS Mail Server (173.249.24.112:25)',
+        name: 'VPS Mail Server with SMTP Auth (173.249.24.112:587)',
         config: {
           host: '173.249.24.112',
-          port: 25,
+          port: 587,
           secure: false,
           auth: {
-            user: 'classora-noreply',
-            pass: 'Classora2024!'
+            user: 'smtp-auth@classora.in',
+            pass: 'ClassoraSMTP2024!'
           },
           tls: {
             rejectUnauthorized: false
           },
           requireTLS: false,
-          ignoreTLS: true
+          ignoreTLS: false
         }
       },
       {
-        name: 'VPS Mail Server (173.249.24.112:587)',
+        name: 'VPS Mail Server (173.249.24.112:25)',
         config: {
           host: '173.249.24.112',
-          port: 587,
+          port: 25,
           secure: false,
           auth: {
             user: 'classora-noreply',
