@@ -134,10 +134,11 @@ export default function StudentsPage() {
                       src={student.avatar} 
                       alt={student.name} 
                       size="lg"
+                      className="flex-shrink-0"
                     />
-                    <div className="flex-1">
-                      <CardTitle className="text-gray-900 dark:text-white">{student.name}</CardTitle>
-                      <CardDescription className="text-gray-600 dark:text-gray-400">{student.email}</CardDescription>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-gray-900 dark:text-white truncate">{student.name}</CardTitle>
+                      <CardDescription className="text-gray-600 dark:text-gray-400 truncate">{student.email}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>

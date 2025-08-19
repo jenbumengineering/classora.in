@@ -264,10 +264,11 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
                       src={user?.avatar} 
                       alt={user?.name || 'User'} 
                       size="sm"
+                      className="flex-shrink-0"
                     />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
                     </div>
                   </div>
                 </div>

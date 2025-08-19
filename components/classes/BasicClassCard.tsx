@@ -155,7 +155,7 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
       {/* Content Section */}
       <div className="bg-gradient-to-br from-gray-900 to-black p-6 text-white">
         {/* Title and Description */}
-        <h3 className="text-xl font-bold text-white mb-2">{classData.name}</h3>
+        <h3 className="text-xl font-bold text-white mb-2 truncate">{classData.name}</h3>
         {classData.description && (
           <p className="text-sm text-gray-300 mb-4 line-clamp-2">{classData.description}</p>
         )}
@@ -166,10 +166,10 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
             src={classData.professor.avatar} 
             alt={classData.professor.name} 
             size="sm"
-            className="mr-3"
+            className="mr-3 flex-shrink-0"
           />
-          <div>
-            <p className="text-sm font-medium text-white">{classData.professor.name}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-white truncate">{classData.professor.name}</p>
             <p className="text-xs text-gray-400">Professor</p>
           </div>
         </div>
