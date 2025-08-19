@@ -303,7 +303,7 @@ export default function EditClassPage() {
               </div>
             </div>
 
-            <div className="max-w-2xl">
+            <div className="max-w-4xl">
               <Card>
                 <CardHeader>
                   <CardTitle>Class Information</CardTitle>
