@@ -166,9 +166,12 @@ export default function ClassPage() {
     if (classId) {
       loadClassData()
       loadClassContent()
-      if (user?.role === 'STUDENT') {
-        checkEnrollment()
-      }
+    }
+  }, [classId])
+
+  useEffect(() => {
+    if (classId && user?.role === 'STUDENT') {
+      checkEnrollment()
     }
   }, [classId, user])
 
@@ -206,7 +209,6 @@ export default function ClassPage() {
       const quizzesResponse = await fetch(`/api/quizzes?classId=${classId}&status=PUBLISHED`)
       if (quizzesResponse.ok) {
         const quizzesData = await quizzesResponse.json()
-        console.log('Loaded quizzes:', quizzesData.quizzes?.map((q: any) => ({ id: q.id, title: q.title, noteId: q.noteId })))
         setQuizzes(quizzesData.quizzes || [])
       }
 
@@ -214,7 +216,6 @@ export default function ClassPage() {
       const assignmentsResponse = await fetch(`/api/assignments?classId=${classId}&status=PUBLISHED`)
       if (assignmentsResponse.ok) {
         const assignmentsData = await assignmentsResponse.json()
-        console.log('Loaded assignments:', assignmentsData.assignments?.map((a: any) => ({ id: a.id, title: a.title, noteId: a.noteId })))
         setAssignments(assignmentsData.assignments || [])
       }
     } catch (error) {
@@ -585,6 +586,41 @@ export default function ClassPage() {
                           )}
                         </CardContent>
                       </Card>
+
+                      {/* General Assignments Section (for assignments not linked to notes) */}
+                      {assignments.filter(assignment => !assignment.noteId).length > 0 && (
+                        <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 mt-6">
+                          <CardHeader>
+                            <CardTitle className="text-gray-900 dark:text-white">General Assignments</CardTitle>
+                            <CardDescription className="text-gray-600 dark:text-gray-400">
+                              Assignments not linked to specific notes
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {assignments.filter(assignment => !assignment.noteId).map((assignment) => (
+                                <div key={assignment.id} className="flex items-center justify-between p-3 border border-orange-200 dark:border-orange-700 rounded-lg bg-orange-50 dark:bg-orange-900/20 hover:shadow-md transition-shadow">
+                                  <div className="flex-1 min-w-0">
+                                    <h5 className="font-medium text-gray-900 dark:text-white text-sm leading-tight line-clamp-2">
+                                      {assignment.title}
+                                    </h5>
+                                    <div className="flex items-center mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                      {assignment.dueDate && (
+                                        <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button asChild variant="outline" size="sm" className="ml-3 flex-shrink-0">
+                                    <Link href={`/dashboard/assignments/${assignment.id}`}>
+                                      View
+                                    </Link>
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
 
 
 
