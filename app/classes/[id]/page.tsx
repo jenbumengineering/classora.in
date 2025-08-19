@@ -509,24 +509,26 @@ export default function ClassPage() {
                                               <Code className="w-4 h-4 text-orange-500 mr-2" />
                                               <h4 className="text-md font-medium text-gray-900 dark:text-white">Quizzes</h4>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            <div className="space-y-2">
                                               {noteQuizzes.map((quiz) => (
-                                                <div key={quiz.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-3 bg-orange-50 dark:bg-orange-900/20 hover:shadow-md transition-shadow">
-                                                  <h5 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                                    {quiz.title}
-                                                  </h5>
-                                                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                                    <p>{quiz.totalQuestions} Questions</p>
-                                                    {quiz.timeLimit && (
-                                                      <p>{quiz.timeLimit} Minutes</p>
-                                                    )}
+                                                <div key={quiz.id} className="flex items-center justify-between p-3 border border-orange-200 dark:border-orange-700 rounded-lg bg-orange-50 dark:bg-orange-900/20 hover:shadow-md transition-shadow">
+                                                  <div className="flex-1 min-w-0">
+                                                    <h5 className="font-medium text-gray-900 dark:text-white text-sm leading-tight line-clamp-2">
+                                                      {quiz.title}
+                                                    </h5>
+                                                    <div className="flex items-center mt-1 text-xs text-gray-600 dark:text-gray-400 space-x-3">
+                                                      <span>{quiz.totalQuestions} Questions</span>
+                                                      {quiz.timeLimit && (
+                                                        <span>{quiz.timeLimit} min</span>
+                                                      )}
+                                                    </div>
                                                   </div>
-                                                  <Button asChild variant="outline" size="sm" className="w-full">
+                                                  <Button asChild variant="outline" size="sm" className="ml-3 flex-shrink-0">
                                                     <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                                                      View Quiz
-                                      </Link>
-                                    </Button>
-                                  </div>
+                                                      View
+                                                    </Link>
+                                                  </Button>
+                                                </div>
                                               ))}
                                             </div>
                                           </div>
@@ -539,24 +541,26 @@ export default function ClassPage() {
                                               <List className="w-4 h-4 text-orange-500 mr-2" />
                                               <h4 className="text-md font-medium text-gray-900 dark:text-white">Assignments</h4>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            <div className="space-y-2">
                                               {noteAssignments.map((assignment) => (
-                                                <div key={assignment.id} className="border border-orange-200 dark:border-orange-700 rounded-lg p-3 bg-orange-50 dark:bg-orange-900/20 hover:shadow-md transition-shadow">
-                                                  <h5 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                                                    {assignment.title}
-                                                  </h5>
-                                                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                                    {assignment.dueDate && (
-                                                      <p>Due date {formatDate(assignment.dueDate)}</p>
-                                                    )}
+                                                <div key={assignment.id} className="flex items-center justify-between p-3 border border-orange-200 dark:border-orange-700 rounded-lg bg-orange-50 dark:bg-orange-900/20 hover:shadow-md transition-shadow">
+                                                  <div className="flex-1 min-w-0">
+                                                    <h5 className="font-medium text-gray-900 dark:text-white text-sm leading-tight line-clamp-2">
+                                                      {assignment.title}
+                                                    </h5>
+                                                    <div className="flex items-center mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                      {assignment.dueDate && (
+                                                        <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                                                      )}
+                                                    </div>
                                                   </div>
-                                                  <Button asChild variant="outline" size="sm" className="w-full">
+                                                  <Button asChild variant="outline" size="sm" className="ml-3 flex-shrink-0">
                                                     <Link href={`/dashboard/assignments/${assignment.id}`}>
-                                                      View Assignment
+                                                      View
                                                     </Link>
                                                   </Button>
-                                </div>
-                              ))}
+                                                </div>
+                                              ))}
                                             </div>
                                           </div>
                                         )}
