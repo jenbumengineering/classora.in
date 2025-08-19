@@ -25,7 +25,7 @@ const createQuizSchema = z.object({
     options: z.array(z.string()).optional(),
     correctAnswer: z.string().optional(),
     correctAnswers: z.array(z.string()).optional(),
-    points: z.number().min(1).max(10).default(1)
+    points: z.number().min(1).max(100).default(1)
   })).min(1, 'At least one question is required')
 })
 
@@ -358,6 +358,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(createdQuiz, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('Validation error details:', error.errors)
       return NextResponse.json(
         { error: 'Validation error', details: error.errors },
         { status: 400 }

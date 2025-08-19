@@ -220,26 +220,30 @@ export default function NewQuizPage() {
     setIsLoading(true)
 
     try {
+      const requestBody = {
+        ...formData,
+        status: finalStatus, // Use the determined status
+        classId: selectedClassId,
+        noteId: selectedNoteId,
+        questions: questions.map(q => ({
+          text: q.text,
+          type: q.type,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          correctAnswers: q.correctAnswers,
+          points: q.points,
+        }))
+      }
+      
+      console.log('Sending quiz data:', requestBody)
+      
       const response = await fetch('/api/quizzes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': user?.id || '',
         },
-        body: JSON.stringify({
-          ...formData,
-          status: finalStatus, // Use the determined status
-          classId: selectedClassId,
-          noteId: selectedNoteId,
-          questions: questions.map(q => ({
-            text: q.text,
-            type: q.type,
-            options: q.options,
-            correctAnswer: q.correctAnswer,
-            correctAnswers: q.correctAnswers,
-            points: q.points,
-          }))
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (response.ok) {
@@ -249,6 +253,11 @@ export default function NewQuizPage() {
         router.push(`/dashboard/quizzes`)
       } else {
         const errorData = await response.json()
+        console.error('API Error:', errorData)
+        if (errorData.details) {
+          const validationErrors = errorData.details.map((err: any) => `${err.path.join('.')}: ${err.message}`).join(', ')
+          throw new Error(`Validation error: ${validationErrors}`)
+        }
         throw new Error(errorData.error || 'Failed to create quiz')
       }
     } catch (error) {
@@ -626,7 +635,7 @@ export default function NewQuizPage() {
                                   onChange={(e) => updateQuestion(question.id, { points: parseInt(e.target.value) || 1 })}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   min="1"
-                                  max="10"
+                                  max="100"
                                 />
                               </div>
                             </div>
