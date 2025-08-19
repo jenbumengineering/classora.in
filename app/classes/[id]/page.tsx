@@ -480,7 +480,7 @@ export default function ClassPage() {
                                           {quiz.title}
                                         </h5>
                                         <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                          <p>{quiz.totalQuestions} Questions</p>
+                                          <p>{(quiz as any).questions?.length || 0} Questions</p>
                                           {quiz.timeLimit && (
                                             <p>{quiz.timeLimit} Minutes</p>
                                           )}
@@ -546,7 +546,7 @@ export default function ClassPage() {
                                     {quiz.title}
                                   </h4>
                                   <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                    <p>{quiz.totalQuestions} Questions</p>
+                                    <p>{(quiz as any).questions?.length || 0} Questions</p>
                                     {quiz.timeLimit && (
                                       <p>{quiz.timeLimit} Minutes</p>
                                     )}
@@ -565,8 +565,40 @@ export default function ClassPage() {
                         )
                       )}
 
-                      {/* Standalone Assignments Section (if no notes) */}
-                      {notes.length === 0 && assignments.length > 0 && (
+                      {/* Standalone Quizzes Section (quizzes not linked to any note) */}
+                      {quizzes.filter(quiz => !quiz.noteId).length > 0 && (
+                        <div>
+                          <div className="flex items-center mb-4">
+                            <Code className="w-5 h-5 text-orange-500 mr-2" />
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quizzes</h3>
+                          </div>
+                          <div className="flex space-x-4 overflow-x-auto pb-2">
+                            {quizzes.filter(quiz => !quiz.noteId).map((quiz) => (
+                              <div key={quiz.id} className="flex-shrink-0 w-64 border border-orange-200 dark:border-orange-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow">
+                                <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
+                                  {quiz.title}
+                                </h4>
+                                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                  <p>{(quiz as any).questions?.length || 0} Questions</p>
+                                  {quiz.timeLimit && (
+                                    <p>{quiz.timeLimit} Minutes</p>
+                                  )}
+                                </div>
+                                <div className="mt-3">
+                                  <Button asChild variant="outline" size="sm" className="w-full">
+                                    <Link href={`/dashboard/quizzes/${quiz.id}`}>
+                                      View Quiz
+                                    </Link>
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Standalone Assignments Section (assignments not linked to any note) */}
+                      {assignments.filter(assignment => !assignment.noteId).length > 0 && (
                         <div>
                           <div className="flex items-center mb-4">
                             <List className="w-5 h-5 text-orange-500 mr-2" />
