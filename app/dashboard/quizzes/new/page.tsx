@@ -173,8 +173,14 @@ export default function NewQuizPage() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent, status?: 'DRAFT' | 'PUBLISHED' | 'CLOSED') => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent | 'DRAFT' | 'PUBLISHED' | 'CLOSED', status?: 'DRAFT' | 'PUBLISHED' | 'CLOSED') => {
+    // Handle both form submissions and direct calls
+    if (e && typeof e === 'object' && 'preventDefault' in e) {
+      e.preventDefault()
+    }
+    
+    // Determine the status
+    const finalStatus = status || (typeof e === 'string' ? e : formData.status)
     
     if (!selectedClassId) {
       toast.error('Please select a class')
@@ -205,6 +211,10 @@ export default function NewQuizPage() {
         toast.error('Multiple selection questions must have at least 2 options')
         return
       }
+      if (question.type === 'TRUE_FALSE' && !question.correctAnswer) {
+        toast.error('True/False questions must have a correct answer selected')
+        return
+      }
     }
 
     setIsLoading(true)
@@ -218,7 +228,7 @@ export default function NewQuizPage() {
         },
         body: JSON.stringify({
           ...formData,
-          status: status || formData.status, // Use the passed status or fall back to form data
+          status: finalStatus, // Use the determined status
           classId: selectedClassId,
           noteId: selectedNoteId,
           questions: questions.map(q => ({
@@ -234,7 +244,7 @@ export default function NewQuizPage() {
 
       if (response.ok) {
         const newQuiz = await response.json()
-        const statusMessage = status === 'PUBLISHED' ? 'published' : 'saved as draft'
+        const statusMessage = finalStatus === 'PUBLISHED' ? 'published' : 'saved as draft'
         toast.success(`Quiz ${statusMessage} successfully!`)
         router.push(`/dashboard/quizzes`)
       } else {
@@ -250,11 +260,11 @@ export default function NewQuizPage() {
   }
 
   const handleSaveDraft = async () => {
-    await handleSubmit(new Event('submit') as any, 'DRAFT')
+    await handleSubmit('DRAFT')
   }
 
   const handlePublish = async () => {
-    await handleSubmit(new Event('submit') as any, 'PUBLISHED')
+    await handleSubmit('PUBLISHED')
   }
 
   if (user?.role !== 'PROFESSOR') {
@@ -596,6 +606,7 @@ export default function NewQuizPage() {
                                     value={question.correctAnswer || ''}
                                     onChange={(e) => updateQuestion(question.id, { correctAnswer: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
                                   >
                                     <option value="">Select correct answer</option>
                                     <option value="true">True</option>
