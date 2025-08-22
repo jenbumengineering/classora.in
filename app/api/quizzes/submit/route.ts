@@ -93,20 +93,20 @@ export async function POST(request: NextRequest) {
       switch (question.type) {
         case 'MULTIPLE_CHOICE':
           const correctOption = question.options.find(opt => opt.isCorrect)
-          isCorrect = answerData.selectedOptions?.[0] === correctOption?.text
+          isCorrect = answerData.selectedOptions?.[0] === correctOption?.id
           points = isCorrect ? question.points : 0
           break
 
         case 'MULTIPLE_SELECTION':
-          const correctOptions = question.options.filter(opt => opt.isCorrect).map(opt => opt.text)
-          const selectedOptions = answerData.selectedOptions || []
-          isCorrect = correctOptions.length === selectedOptions.length &&
-                     correctOptions.every(opt => selectedOptions.includes(opt))
+          const correctOptionIds = question.options.filter(opt => opt.isCorrect).map(opt => opt.id)
+          const selectedOptionIds = answerData.selectedOptions || []
+          isCorrect = correctOptionIds.length === selectedOptionIds.length &&
+                     correctOptionIds.every(id => selectedOptionIds.includes(id))
           points = isCorrect ? question.points : 0
           break
 
         case 'TRUE_FALSE':
-          const correctAnswer = question.options.find(opt => opt.isCorrect)?.text
+          const correctAnswer = question.options.find(opt => opt.isCorrect)?.id
           isCorrect = answerData.selectedOptions?.[0] === correctAnswer
           points = isCorrect ? question.points : 0
           break
@@ -138,14 +138,14 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Calculate percentage
+    const percentage = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0
+
     // Update attempt with final score
     await prisma.quizAttempt.update({
       where: { id: attempt.id },
-      data: { score: totalScore }
+      data: { score: percentage }
     })
-
-    // Calculate percentage
-    const percentage = totalPoints > 0 ? (totalScore / totalPoints) * 100 : 0
 
     return NextResponse.json({
       success: true,

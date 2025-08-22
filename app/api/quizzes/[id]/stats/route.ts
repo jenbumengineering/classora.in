@@ -24,11 +24,16 @@ export async function GET(
         questions: {
           select: {
             id: true,
-            question: true
+            question: true,
+            points: true
           }
         },
         attempts: {
-          include: {
+          select: {
+            id: true,
+            score: true,
+            timeSpent: true,
+            completedAt: true,
             student: {
               select: {
                 name: true
@@ -37,14 +42,14 @@ export async function GET(
             answers: {
               select: {
                 questionId: true,
-                isCorrect: true
+                isCorrect: true,
+                points: true
               }
             }
           },
           orderBy: {
             completedAt: 'desc'
-          },
-          take: 10
+          }
         },
         _count: {
           select: {
@@ -72,9 +77,8 @@ export async function GET(
 
     if (completedAttempts.length > 0) {
       const scores = completedAttempts.map(attempt => {
-        const correctAnswers = attempt.answers.filter(answer => answer.isCorrect).length
-        const totalQuestions = quiz.questions.length
-        const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0
+        // Use the stored score from the attempt, not recalculated from answers
+        const score = attempt.score || 0
         
         if (score > highestScore) highestScore = score
         if (score < lowestScore) lowestScore = score
@@ -88,17 +92,24 @@ export async function GET(
       averageScore = scores.reduce((sum, score) => sum + score, 0) / scores.length
     }
 
+    // Handle edge cases
+    if (completedAttempts.length === 0) {
+      lowestScore = 0
+      highestScore = 0
+    }
+
     const averageTimeSpent = completedAttempts.length > 0 ? totalTimeSpent / completedAttempts.length : 0
     const completionRate = totalAttempts > 0 ? (completedAttempts.length / totalAttempts) * 100 : 0
 
     // Calculate question statistics
     const questionStats = quiz.questions.map(question => {
-      const questionAttempts = quiz.attempts.flatMap(attempt => 
+      // Get all answers for this question from all attempts
+      const questionAnswers = quiz.attempts.flatMap(attempt => 
         attempt.answers.filter(answer => answer.questionId === question.id)
       )
       
-      const totalAnswers = questionAttempts.length
-      const correctAnswers = questionAttempts.filter(answer => answer.isCorrect).length
+      const totalAnswers = questionAnswers.length
+      const correctAnswers = questionAnswers.filter(answer => answer.isCorrect).length
       const successRate = totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0
 
       return {
@@ -112,9 +123,8 @@ export async function GET(
 
     // Format recent attempts
     const recentAttempts = quiz.attempts.slice(0, 10).map(attempt => {
-      const correctAnswers = attempt.answers.filter(answer => answer.isCorrect).length
-      const totalQuestions = quiz.questions.length
-      const score = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0
+      // Use the stored score from the attempt
+      const score = attempt.score || 0
 
       return {
         id: attempt.id,

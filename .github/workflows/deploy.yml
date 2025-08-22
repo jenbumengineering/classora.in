@@ -1,39 +1,205 @@
-name: Deploy to VPS
+name: Deploy to Production
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  VPS_HOST: 173.249.24.112
+  VPS_USER: root
+  PROJECT_NAME: classora.in
+  DEPLOY_PATH: /var/www/classora.in
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_password_change_this
+          MYSQL_DATABASE: classora_db
+          MYSQL_USER: classora_user
+          MYSQL_PASSWORD: classora_password_change_this
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 3306:3306
+
     steps:
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v0.1.5
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Generate Prisma client
+      run: npx prisma generate
+    
+    - name: Run tests
+      run: npm test
+      env:
+        DATABASE_URL: mysql://classora_user:classora_password_change_this@localhost:3306/classora_db
+        NEXTAUTH_SECRET: test_secret
+        NEXTAUTH_URL: http://localhost:3000
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Generate Prisma client
+      run: npx prisma generate
+    
+    - name: Build application
+      run: npm run build
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+        NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+    
+    - name: Create deployment package
+      run: |
+        tar -czf deployment.tar.gz \
+          --exclude='.git' \
+          --exclude='node_modules' \
+          --exclude='.next' \
+          --exclude='*.log' \
+          --exclude='.env*' \
+          .
+    
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ env.VPS_HOST }}
+        username: ${{ env.VPS_USER }}
+        password: ${{ secrets.VPS_PASSWORD }}
+        port: 22
         script: |
-          # Navigate to project directory
-          cd /vps-projects/classora
+          # Create deployment directory if it doesn't exist
+          mkdir -p ${{ env.DEPLOY_PATH }}
+          cd ${{ env.DEPLOY_PATH }}
           
-          # Pull latest changes
-          git pull origin main
+          # Create backup of current deployment
+          if [ -d "current" ]; then
+            echo "Creating backup of current deployment..."
+            cp -r current backup-$(date +%Y%m%d-%H%M%S)
+          fi
           
-          # Stop and remove existing containers
-          docker-compose down
+          # Remove old deployment package if exists
+          rm -f deployment.tar.gz
           
-          # Build and start new containers
-          docker-compose build --no-cache
-          docker-compose up -d
+          # Create new deployment directory
+          mkdir -p deployment-$(date +%Y%m%d-%H%M%S)
+          cd deployment-$(date +%Y%m%d-%H%M%S)
+    
+    - name: Upload deployment package
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ env.VPS_HOST }}
+        username: ${{ env.VPS_USER }}
+        password: ${{ secrets.VPS_PASSWORD }}
+        port: 22
+        source: "deployment.tar.gz"
+        target: "${{ env.DEPLOY_PATH }}/deployment-$(date +%Y%m%d-%H%M%S)/"
+    
+    - name: Extract and setup deployment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ env.VPS_HOST }}
+        username: ${{ env.VPS_USER }}
+        password: ${{ secrets.VPS_PASSWORD }}
+        port: 22
+        script: |
+          cd ${{ env.DEPLOY_PATH }}
           
-          # Clean up unused Docker resources
-          docker system prune -f
+          # Find the latest deployment directory
+          LATEST_DEPLOY=$(ls -t deployment-* | head -1)
+          cd $LATEST_DEPLOY
           
-          # Check if containers are running
-          docker-compose ps
+          # Extract deployment package
+          tar -xzf deployment.tar.gz
+          rm deployment.tar.gz
+          
+          # Install dependencies
+          npm ci --only=production
+          
+          # Generate Prisma client
+          npx prisma generate
+          
+          # Create environment file
+          cat > .env << EOF
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
+          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+          NODE_ENV=production
+          EOF
+          
+          # Set proper permissions
+          chown -R www-data:www-data .
+          chmod -R 755 .
+          chmod 600 .env
+          
+          # Build the application
+          npm run build
+          
+          # Update current symlink
+          cd ${{ env.DEPLOY_PATH }}
+          rm -f current
+          ln -s $LATEST_DEPLOY current
+          
+          # Restart services
+          docker-compose -f current/docker-compose.yml down
+          docker-compose -f current/docker-compose.yml up -d
+          
+          # Clean up old backups (keep last 5)
+          ls -t backup-* | tail -n +6 | xargs -r rm -rf
+          ls -t deployment-* | tail -n +6 | xargs -r rm -rf
           
           echo "Deployment completed successfully!"
+    
+    - name: Health check
+      run: |
+        sleep 30
+        curl -f http://${{ env.VPS_HOST }} || exit 1
+    
+    - name: Notify deployment status
+      if: always()
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ env.VPS_HOST }}
+        username: ${{ env.VPS_USER }}
+        password: ${{ secrets.VPS_PASSWORD }}
+        port: 22
+        script: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment successful!"
+            # Send notification email or webhook here
+          else
+            echo "❌ Deployment failed!"
+            # Send failure notification here
+          fi

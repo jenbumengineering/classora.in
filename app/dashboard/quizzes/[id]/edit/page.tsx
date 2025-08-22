@@ -57,7 +57,7 @@ export default function EditQuizPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login')
+      router.push('/auth/login')
       return
     }
 

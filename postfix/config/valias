@@ -1,0 +1,6 @@
+# Virtual alias maps for classora.in
+# Format: alias@domain.com real-email@domain.com
+postmaster@classora.in admin@classora.in
+abuse@classora.in admin@classora.in
+webmaster@classora.in admin@classora.in
+info@classora.in support@classora.in

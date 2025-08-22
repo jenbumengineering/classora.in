@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import { FileText, Plus, Edit, Trash2, Calendar, Users, Eye } from 'lucide-react'
 import Link from 'next/link'
 
@@ -60,8 +61,8 @@ export default function AssignmentsPage() {
       <div className="px-6 py-8 mb-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Assignments</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <h1 className="text-3xl font-bold">Assignments</h1>
+            <p className="text-muted-foreground mt-2">
               {user?.role === 'PROFESSOR' 
                 ? 'Create and manage assignments for your students' 
                 : 'View assignments from your enrolled classes'
@@ -69,7 +70,7 @@ export default function AssignmentsPage() {
             </p>
           </div>
           {user?.role === 'PROFESSOR' && (
-            <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+            <Button asChild>
               <Link href="/dashboard/assignments/new">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Assignment
@@ -85,10 +86,10 @@ export default function AssignmentsPage() {
             <LoadingSpinner size="lg" />
           </div>
         ) : assignments.length === 0 ? (
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <Card>
             <CardContent className="p-12 text-center">
-              <div className="text-gray-500 dark:text-gray-400">
-                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+              <div className="text-muted-foreground">
+                <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
                 <h3 className="text-lg font-medium mb-2">
                   {user?.role === 'PROFESSOR' ? 'No assignments yet' : 'No assignments available'}
                 </h3>
@@ -99,7 +100,7 @@ export default function AssignmentsPage() {
                   }
                 </p>
                 {user?.role === 'PROFESSOR' && (
-                  <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+                  <Button asChild>
                     <Link href="/dashboard/assignments/new">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Your First Assignment
@@ -112,12 +113,12 @@ export default function AssignmentsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {assignments.map((assignment) => (
-              <Card key={assignment.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card key={assignment.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <CardTitle className="text-gray-900 dark:text-white">{assignment.title}</CardTitle>
-                      <CardDescription className="text-gray-600 dark:text-gray-400">
+                      <CardTitle>{assignment.title}</CardTitle>
+                      <CardDescription>
                         {assignment.className}
                       </CardDescription>
                     </div>
@@ -127,7 +128,6 @@ export default function AssignmentsPage() {
                           asChild
                           variant="ghost"
                           size="sm"
-                          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                         >
                           <Link href={`/dashboard/assignments/${assignment.id}/edit`}>
                             <Edit className="w-4 h-4" />
@@ -136,7 +136,7 @@ export default function AssignmentsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -146,12 +146,12 @@ export default function AssignmentsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-                      {assignment.description}
-                    </p>
+                    <div className="text-sm text-muted-foreground line-clamp-3">
+                      <RichTextRenderer content={assignment.description} />
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       {assignment.dueDate && (
                         <>
                           <Calendar className="w-3 h-3" />
@@ -159,7 +159,7 @@ export default function AssignmentsPage() {
                         </>
                       )}
                     </div>
-                    <Button asChild variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <Button asChild variant="outline" size="sm">
                       <Link href={`/dashboard/assignments/${assignment.id}`}>
                         <Eye className="w-4 h-4 mr-1" />
                         View

@@ -49,7 +49,7 @@ export default function QuizStatsPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login')
+      router.push('/auth/login')
       return
     }
 

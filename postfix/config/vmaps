@@ -1,0 +1,9 @@
+# Virtual mailbox maps for classora.in
+# Format: email@domain.com /var/mail/domain.com/user/
+noreply@classora.in classora.in/noreply/
+support@classora.in classora.in/support/
+admin@classora.in classora.in/admin/
+postmaster@classora.in classora.in/postmaster/
+abuse@classora.in classora.in/abuse/
+webmaster@classora.in classora.in/webmaster/
+info@classora.in classora.in/info/

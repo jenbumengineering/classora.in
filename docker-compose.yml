@@ -39,6 +39,70 @@ services:
       - classora-network
     command: --default-authentication-plugin=mysql_native_password
 
+  # Webmin Management Interface
+  webmin:
+    image: jc21/webmin:latest
+    container_name: classora-webmin
+    restart: unless-stopped
+    ports:
+      - "10000:10000"
+    environment:
+      - WEBMIN_INIT_SSL_ENABLED=1
+      - WEBMIN_INIT_REFERERS=classora.in
+      - WEBMIN_INIT_PASSWD=admin_password_change_this
+    volumes:
+      - webmin_data:/etc/webmin
+      - webmin_logs:/var/webmin
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - classora-network
+    depends_on:
+      - postfix
+
+  # Postfix Mail Server
+  postfix:
+    image: catatnight/postfix:latest
+    container_name: classora-postfix
+    restart: unless-stopped
+    hostname: mail.classora.in
+    environment:
+      - maildomain=classora.in
+      - smtp_user=classora:mail_password_change_this
+    ports:
+      - "25:25"
+      - "587:587"
+      - "465:465"
+    volumes:
+      - postfix_data:/var/mail
+      - postfix_logs:/var/log
+      - ./postfix/config:/etc/postfix
+      - ./postfix/ssl:/etc/ssl/postfix
+    networks:
+      - classora-network
+    cap_add:
+      - NET_ADMIN
+      - SYS_PTRACE
+
+  # Dovecot IMAP/POP3 Server
+  dovecot:
+    image: dovemark/dovecot:latest
+    container_name: classora-dovecot
+    restart: unless-stopped
+    ports:
+      - "110:110"
+      - "143:143"
+      - "993:993"
+      - "995:995"
+    volumes:
+      - postfix_data:/var/mail
+      - dovecot_data:/var/lib/dovecot
+      - ./dovecot/config:/etc/dovecot
+      - ./dovecot/ssl:/etc/ssl/dovecot
+    networks:
+      - classora-network
+    depends_on:
+      - postfix
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
@@ -58,6 +122,11 @@ services:
 
 volumes:
   mysql_data:
+  webmin_data:
+  webmin_logs:
+  postfix_data:
+  postfix_logs:
+  dovecot_data:
 
 networks:
   classora-network:

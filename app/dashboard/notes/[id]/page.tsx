@@ -73,7 +73,7 @@ export default function NoteDetailPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login')
+      router.push('/auth/login')
       return
     }
 

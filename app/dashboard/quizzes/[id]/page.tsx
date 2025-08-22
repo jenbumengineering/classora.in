@@ -61,7 +61,7 @@ export default function QuizDetailPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login')
+      router.push('/auth/login')
       return
     }
 

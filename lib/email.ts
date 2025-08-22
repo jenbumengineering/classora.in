@@ -1,20 +1,20 @@
 import nodemailer from 'nodemailer'
 
-// Email configuration - Using VPS mail server with SMTP auth
+// Email configuration - Using local Postfix mail server
 const emailConfig = {
-  host: '173.249.24.112',
-  port: 587,
-  secure: false,
+  host: 'mail.classora.in', // Local mail server hostname
+  port: 587, // SMTP submission port
+  secure: false, // Use STARTTLS
   auth: {
-    user: 'smtp-auth@classora.in',
-    pass: 'ClassoraSMTP2024!'
+    user: 'noreply@classora.in',
+    pass: process.env.EMAIL_PASSWORD || 'mail_password_change_this'
   },
   tls: {
     rejectUnauthorized: false
   },
-  debug: true, // Enable debug to see what's happening
-  logger: true,
-  requireTLS: false,
+  debug: process.env.NODE_ENV === 'development', // Enable debug in development
+  logger: process.env.NODE_ENV === 'development',
+  requireTLS: true,
   ignoreTLS: false
 }
 

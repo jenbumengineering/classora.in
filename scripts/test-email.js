@@ -2,20 +2,16 @@ const nodemailer = require('nodemailer');
 
 // Test email configuration
 const emailConfig = {
-  host: '173.249.24.112',
-  port: 587,
+  host: '173.249.24.112', // Use IP directly to avoid IPv6 issues
+  port: 25,
   secure: false,
-  auth: {
-    user: 'smtp-auth@classora.in',
-    pass: 'ClassoraSMTP2024!'
-  },
   tls: {
     rejectUnauthorized: false
   },
   debug: true,
   logger: true,
   requireTLS: false,
-  ignoreTLS: false
+  ignoreTLS: true
 };
 
 async function testEmail() {
