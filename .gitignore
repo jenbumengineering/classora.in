@@ -119,6 +119,9 @@ uploads/
 *.bak
 *.backup
 
+# Deployment files
+deployment.tar.gz
+
 # Local development
 .env.local
 .env.development.local
