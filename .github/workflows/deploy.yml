@@ -74,6 +74,12 @@ jobs:
     - name: Generate Prisma client
       run: npx prisma generate
     
+    - name: Install ImageMagick for favicon generation
+      run: sudo apt-get update && sudo apt-get install -y imagemagick
+    
+    - name: Generate favicon files
+      run: node scripts/generate-favicon.js
+    
     - name: Build application
       run: npm run build
       env:
