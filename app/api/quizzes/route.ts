@@ -25,7 +25,8 @@ const createQuizSchema = z.object({
     options: z.array(z.string()).optional(),
     correctAnswer: z.string().optional(),
     correctAnswers: z.array(z.string()).optional(),
-    points: z.number().min(1).max(100).default(1)
+    points: z.number().min(1).max(100).default(1),
+    explanation: z.string().optional()
   })).min(1, 'At least one question is required')
 })
 
@@ -198,7 +199,10 @@ export async function POST(request: NextRequest) {
 
     // Verify the user is a professor
     const professor = await prisma.user.findUnique({
-      where: { id: professorId, role: 'PROFESSOR' }
+      where: { 
+        id: professorId, 
+        role: 'PROFESSOR'
+      }
     })
 
     if (!professor) {
@@ -262,25 +266,56 @@ export async function POST(request: NextRequest) {
           question: questionData.text,
           type: questionData.type,
           points: questionData.points,
-          order: i + 1
+          order: i + 1,
+          explanation: questionData.explanation || null
         }
       })
 
-      // Create options for multiple choice and multiple selection questions
-      if (questionData.type === 'MULTIPLE_CHOICE' || questionData.type === 'MULTIPLE_SELECTION') {
+      // Create options for different question types
+      if (questionData.type === 'TRUE_FALSE') {
+        // Create True and False options for TRUE_FALSE questions
+        const trueFalseOptions = [
+          {
+            questionId: question.id,
+            text: 'True',
+            isCorrect: questionData.correctAnswer === 'true',
+            order: 1,
+            explanation: questionData.explanation || null
+          },
+          {
+            questionId: question.id,
+            text: 'False',
+            isCorrect: questionData.correctAnswer === 'false',
+            order: 2,
+            explanation: questionData.explanation || null
+          }
+        ]
+        
+        for (const option of trueFalseOptions) {
+          await prisma.questionOption.create({
+            data: option
+          })
+        }
+      } else if (questionData.type === 'MULTIPLE_CHOICE' || questionData.type === 'MULTIPLE_SELECTION') {
         if (questionData.options && questionData.options.length > 0) {
           for (let j = 0; j < questionData.options.length; j++) {
-            const option = questionData.options[j]
-            const isCorrect = questionData.type === 'MULTIPLE_CHOICE' 
-              ? questionData.correctAnswer === option
-              : questionData.correctAnswers?.includes(option) || false
+            const optionText = questionData.options[j]
+            
+            // Determine if this option is correct
+            let isCorrect = false
+            if (questionData.type === 'MULTIPLE_CHOICE') {
+              isCorrect = questionData.correctAnswer === optionText
+            } else if (questionData.type === 'MULTIPLE_SELECTION') {
+              isCorrect = questionData.correctAnswers?.includes(optionText) || false
+            }
 
             await prisma.questionOption.create({
               data: {
                 questionId: question.id,
-                text: option,
+                text: optionText,
                 isCorrect: isCorrect,
-                order: j + 1
+                order: j + 1,
+                explanation: null
               }
             })
           }

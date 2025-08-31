@@ -29,7 +29,9 @@ import {
   ChevronDown,
   ChevronUp,
   Code,
-  List
+  List,
+  Mail,
+  UserPlus
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
@@ -146,8 +148,18 @@ export default function ClassPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isEnrolled, setIsEnrolled] = useState(false)
+  const [enrollmentLoading, setEnrollmentLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabType>('overview')
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set())
+  
+  // Invite functionality state
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [inviteType, setInviteType] = useState<'email' | 'existing'>('email')
+  const [emailInvites, setEmailInvites] = useState<string[]>([''])
+  const [existingStudents, setExistingStudents] = useState<any[]>([])
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false)
+  const [isSendingInvites, setIsSendingInvites] = useState(false)
 
   const classId = params.id as string
 
@@ -166,15 +178,24 @@ export default function ClassPage() {
   useEffect(() => {
     if (classId) {
       loadClassData()
-      loadClassContent()
     }
   }, [classId])
 
   useEffect(() => {
-    if (classId && user?.role === 'STUDENT') {
-      checkEnrollment()
+    if (classId && !enrollmentLoading) {
+      loadClassContent()
     }
-  }, [classId, user])
+  }, [classId, enrollmentLoading, isEnrolled])
+
+  useEffect(() => {
+    if (classId && user?.id && user?.role === 'STUDENT') {
+      setEnrollmentLoading(true) // Reset loading state
+      checkEnrollment()
+    } else if (classId && user?.role !== 'STUDENT') {
+      // If user is not a student, set enrollment loading to false
+      setEnrollmentLoading(false)
+    }
+  }, [classId, user?.id, user?.role])
 
   const loadClassData = async () => {
     try {
@@ -198,6 +219,11 @@ export default function ClassPage() {
   }
 
   const loadClassContent = async () => {
+    // Only load content if user is enrolled or is the professor
+    if (user?.role === 'STUDENT' && !isEnrolled) {
+      return
+    }
+
     try {
       // Load notes
       const notesResponse = await fetch(`/api/notes?classId=${classId}&status=PUBLISHED`)
@@ -225,16 +251,30 @@ export default function ClassPage() {
   }
 
   const checkEnrollment = async () => {
-    if (!user) return
+    if (!user) {
+      setEnrollmentLoading(false)
+      return
+    }
 
     try {
-      const response = await fetch(`/api/enrollments?studentId=${user.id}&classId=${classId}`)
+      const response = await fetch(`/api/enrollments?studentId=${user.id}&classId=${classId}`, {
+        headers: {
+          'x-user-id': user.id
+        }
+      })
       if (response.ok) {
         const data = await response.json()
-        setIsEnrolled(data.enrollments.some((e: any) => e.classId === classId))
+        const isEnrolledInThisClass = data.enrollments.some((e: any) => e.classId === classId)
+        setIsEnrolled(isEnrolledInThisClass)
+      } else {
+        console.error('Failed to check enrollment status')
+        setIsEnrolled(false)
       }
     } catch (error) {
       console.error('Error checking enrollment:', error)
+      setIsEnrolled(false)
+    } finally {
+      setEnrollmentLoading(false)
     }
   }
 
@@ -266,6 +306,128 @@ export default function ClassPage() {
       toast.error(error instanceof Error ? error.message : 'Failed to enroll')
     }
   }
+
+  const loadExistingStudents = async () => {
+    if (!user || user.role !== 'PROFESSOR') return
+
+    setIsLoadingStudents(true)
+    try {
+      const response = await fetch(`/api/classes/${classId}/available-students`, {
+        headers: {
+          'x-user-id': user.id
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setExistingStudents(data.students || [])
+      } else {
+        const errorData = await response.json()
+        console.error('API Error:', errorData)
+        throw new Error('Failed to load students')
+      }
+    } catch (error) {
+      console.error('Error loading students:', error)
+      toast.error('Failed to load available students')
+    } finally {
+      setIsLoadingStudents(false)
+    }
+  }
+
+  const handleAddEmailField = () => {
+    setEmailInvites([...emailInvites, ''])
+  }
+
+  const handleRemoveEmailField = (index: number) => {
+    if (emailInvites.length > 1) {
+      setEmailInvites(emailInvites.filter((_, i) => i !== index))
+    }
+  }
+
+  const handleEmailChange = (index: number, value: string) => {
+    const newEmails = [...emailInvites]
+    newEmails[index] = value
+    setEmailInvites(newEmails)
+  }
+
+  const handleStudentToggle = (studentId: string) => {
+    setSelectedStudents(prev => 
+      prev.includes(studentId) 
+        ? prev.filter(id => id !== studentId)
+        : [...prev, studentId]
+    )
+  }
+
+  const handleSendInvites = async () => {
+    if (!user || user.role !== 'PROFESSOR') return
+
+    setIsSendingInvites(true)
+    try {
+      let response
+      
+      if (inviteType === 'email') {
+        const validEmails = emailInvites.filter(email => email.trim() !== '')
+        if (validEmails.length === 0) {
+          toast.error('Please enter at least one email address')
+          return
+        }
+
+        response = await fetch(`/api/classes/${classId}/invite`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id
+          },
+          body: JSON.stringify({
+            emails: validEmails
+          })
+        })
+      } else {
+        if (selectedStudents.length === 0) {
+          toast.error('Please select at least one student')
+          return
+        }
+
+        response = await fetch(`/api/classes/${classId}/invite-existing`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id
+          },
+          body: JSON.stringify({
+            studentIds: selectedStudents
+          })
+        })
+      }
+
+      if (response.ok) {
+        toast.success('Invites sent successfully!')
+        setShowInviteModal(false)
+        setEmailInvites([''])
+        setSelectedStudents([])
+        setInviteType('email')
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to send invites')
+      }
+    } catch (error) {
+      console.error('Error sending invites:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to send invites')
+    } finally {
+      setIsSendingInvites(false)
+    }
+  }
+
+  const openInviteModal = () => {
+    setShowInviteModal(true)
+  }
+
+  // Load existing students when modal opens and existing tab is selected
+  useEffect(() => {
+    if (showInviteModal && inviteType === 'existing') {
+      loadExistingStudents()
+    }
+  }, [showInviteModal, inviteType])
 
   if (isLoading) {
     return (
@@ -322,18 +484,24 @@ export default function ClassPage() {
                   <p className="text-gray-600 dark:text-gray-400">Class Code: {classData.code}</p>
                 </div>
                 {user?.role === 'PROFESSOR' && user?.id === classData.professor.id && (
-                  <Button asChild>
-                    <Link href={`/classes/${classId}/edit`}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Class
-                    </Link>
-                  </Button>
+                  <div className="flex space-x-3">
+                    <Button onClick={openInviteModal}>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Invite Students
+                    </Button>
+                    <Button asChild>
+                      <Link href={`/classes/${classId}/edit`}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Class
+                      </Link>
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Enrollment Button */}
-            {user?.role === 'STUDENT' && !isEnrolled && (
+            {user?.role === 'STUDENT' && !enrollmentLoading && !isEnrolled && (
               <div className="mb-6">
                 <Button 
                   onClick={handleEnroll}
@@ -343,6 +511,10 @@ export default function ClassPage() {
                 </Button>
               </div>
             )}
+            
+
+            
+
 
             {/* Tabs Navigation */}
             <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
@@ -363,19 +535,43 @@ export default function ClassPage() {
               </nav>
             </div>
 
-            {/* Tab Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Main Content */}
-              <div className="lg:col-span-2">
-                {activeTab === 'overview' && (
-                  <div className="space-y-8">
-                    {/* About This Course */}
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">About This Course</h2>
-                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                        <RichTextRenderer content={classData.description || 'No description available for this course.'} />
+            {/* Enrollment Gate for Students */}
+            {user?.role === 'STUDENT' && !enrollmentLoading && !isEnrolled && (
+              <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-200 dark:border-orange-700 rounded-lg p-8 text-center mb-8">
+                <div className="max-w-md mx-auto">
+                  <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BookOpen className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Enroll to Access Course Content
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    You need to enroll in this class to view notes, quizzes, assignments, and other course materials.
+                  </p>
+                  <Button 
+                    onClick={handleEnroll}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg"
+                  >
+                    Enroll in Class
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Tab Content - Only show if enrolled or professor */}
+            {(user?.role !== 'STUDENT' || isEnrolled) && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Content */}
+                <div className="lg:col-span-2">
+                  {activeTab === 'overview' && (
+                    <div className="space-y-8">
+                      {/* About This Course */}
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">About This Course</h2>
+                        <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                          <RichTextRenderer content={classData.description || 'No description available for this course.'} />
+                        </div>
                       </div>
-                    </div>
 
                     {/* What You'll Learn */}
                     <div>
@@ -745,7 +941,9 @@ export default function ClassPage() {
               <div className="lg:col-span-1">
                 <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 sticky top-6">
                   <CardHeader>
-                    <CardTitle className="text-gray-900 dark:text-white">This Course Includes</CardTitle>
+                    <CardTitle className="text-gray-900 dark:text-white">
+                      {user?.role === 'STUDENT' && !isEnrolled ? 'Course Preview' : 'This Course Includes'}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -784,13 +982,193 @@ export default function ClassPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Enrollment CTA for non-enrolled students */}
+                    {user?.role === 'STUDENT' && !isEnrolled && (
+                      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <Button 
+                          onClick={handleEnroll}
+                          className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                        >
+                          Enroll Now
+                        </Button>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                          Get access to all course materials
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
             </div>
+          )}
+
           </div>
         </main>
       </div>
+
+      {/* Invite Students Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Invite Students</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInviteModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </Button>
+            </div>
+
+            {/* Invite Type Tabs */}
+            <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setInviteType('email')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  inviteType === 'email'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Mail className="w-4 h-4 inline mr-2" />
+                Email Invites
+              </button>
+              <button
+                onClick={() => {
+                  setInviteType('existing')
+                  loadExistingStudents()
+                }}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  inviteType === 'existing'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Users className="w-4 h-4 inline mr-2" />
+                Existing Students
+              </button>
+            </div>
+
+            {/* Email Invites Tab */}
+            {inviteType === 'email' && (
+              <div className="space-y-4">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Send email invitations to students who are not yet registered on the platform.
+                </p>
+                
+                <div className="space-y-3">
+                  {emailInvites.map((email, index) => (
+                    <div key={index} className="flex space-x-2">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => handleEmailChange(index, e.target.value)}
+                        placeholder="Enter email address"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white"
+                      />
+                      {emailInvites.length > 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveEmailField(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  
+                  <Button
+                    variant="outline"
+                    onClick={handleAddEmailField}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Another Email
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Existing Students Tab */}
+            {inviteType === 'existing' && (
+              <div className="space-y-4">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Invite students who are already enrolled in your other classes but not in this one.
+                </p>
+                
+                {isLoadingStudents ? (
+                  <div className="flex justify-center py-8">
+                    <LoadingSpinner size="lg" />
+                  </div>
+                ) : existingStudents.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p>No available students found.</p>
+                    <p className="text-sm">All your students are already enrolled in this class.</p>
+                  </div>
+                ) : (
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {existingStudents.map((student) => (
+                      <div
+                        key={student.id}
+                        className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          selectedStudents.includes(student.id)
+                            ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                        }`}
+                        onClick={() => handleStudentToggle(student.id)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedStudents.includes(student.id)}
+                          onChange={() => handleStudentToggle(student.id)}
+                          className="w-4 h-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 dark:text-white">{student.name}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{student.email}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                variant="outline"
+                onClick={() => setShowInviteModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendInvites}
+                disabled={isSendingInvites}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                {isSendingInvites ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Send Invites
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

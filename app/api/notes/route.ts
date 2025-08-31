@@ -37,7 +37,10 @@ export async function POST(request: NextRequest) {
 
     // Verify the user is a professor
     const professor = await prisma.user.findUnique({
-      where: { id: professorId, role: 'PROFESSOR' }
+      where: { 
+        id: professorId, 
+        role: 'PROFESSOR'
+      }
     })
 
     if (!professor) {

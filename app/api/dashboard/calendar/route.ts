@@ -106,6 +106,27 @@ export async function GET(request: NextRequest) {
         })
       }
 
+      // Add attendance sessions for professors
+      const attendanceSessions = await prisma.attendanceSession.findMany({
+        where: { professorId: userId },
+        include: {
+          class: true
+        }
+      })
+
+      for (const session of attendanceSessions) {
+        events.push({
+          id: session.id,
+          title: session.title || 'Attendance Session',
+          type: 'attendance',
+          date: session.date.toISOString(),
+          classId: session.classId,
+          className: session.class.name,
+          description: session.description || 'Attendance marking session',
+          status: session.isActive ? 'Active' : 'Closed'
+        })
+      }
+
     } else if (user.role === 'STUDENT') {
       // For students, get events from enrolled classes
       const enrollments = await prisma.enrollment.findMany({
@@ -184,6 +205,29 @@ export async function GET(request: NextRequest) {
             priority: event.priority
           })
         }
+
+        // Add attendance sessions
+        const attendanceSessions = await prisma.attendanceSession.findMany({
+          where: { classId: enrollment.class.id },
+          include: {
+            records: {
+              where: { studentId: userId }
+            }
+          }
+        })
+
+        for (const session of attendanceSessions) {
+          events.push({
+            id: session.id,
+            title: session.title || 'Attendance Session',
+            type: 'attendance',
+            date: session.date.toISOString(),
+            classId: enrollment.class.id,
+            className: enrollment.class.name,
+            description: session.description || 'Attendance marking session',
+            status: session.isActive ? 'Active' : 'Closed'
+          })
+        }
       }
     }
 
@@ -210,7 +254,8 @@ export async function GET(request: NextRequest) {
       notes: weeklyEvents.filter(e => e.type === 'note').length,
       holidays: weeklyEvents.filter(e => e.type === 'holiday').length,
       academic: weeklyEvents.filter(e => e.type === 'academic').length,
-      todos: weeklyEvents.filter(e => e.type === 'todo').length
+      todos: weeklyEvents.filter(e => e.type === 'todo').length,
+      attendance: weeklyEvents.filter(e => e.type === 'attendance').length
     }
 
     // Get upcoming events (next 7 days)

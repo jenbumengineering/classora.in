@@ -8,6 +8,13 @@ import { Avatar } from '@/lib/avatar'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
 
+// Utility function to strip HTML tags from text
+const stripHtmlTags = (html: string): string => {
+  const tmp = document.createElement('div')
+  tmp.innerHTML = html
+  return tmp.textContent || tmp.innerText || ''
+}
+
 interface BasicClassCardProps {
   classData: {
     id: string
@@ -48,6 +55,8 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
 
   // Use the stored gradient color or fallback to default
   const selectedGradient = classData.gradientColor || 'from-gray-900 to-black'
+  
+
 
   const handleArchiveToggle = async () => {
     if (!user || user.role !== 'PROFESSOR') return
@@ -153,11 +162,13 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
       </div>
 
       {/* Content Section */}
-      <div className="bg-gradient-to-br from-gray-900 to-black p-6 text-white">
+      <div className={`bg-gradient-to-br ${selectedGradient} p-6 text-white`}>
         {/* Title and Description */}
         <h3 className="text-xl font-bold text-white mb-2 truncate">{classData.name}</h3>
         {classData.description && (
-          <p className="text-sm text-gray-300 mb-4 line-clamp-2">{classData.description}</p>
+          <p className="text-sm text-gray-300 mb-4 line-clamp-2">
+            {stripHtmlTags(classData.description)}
+          </p>
         )}
 
         {/* Professor Info */}
@@ -224,6 +235,10 @@ export default function BasicClassCard({ classData, onEnroll, isEnrolled, onUpda
               Enroll
             </Button>
           )}
+          
+
+          
+
         </div>
       </div>
     </div>

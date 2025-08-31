@@ -38,6 +38,7 @@ model User {
   createdPracticeQuestions PracticeQuestion[] @relation("PracticeQuestionCreator")
   createdPracticeFiles PracticeFile[]
   createdCalendarEvents CalendarEvent[]
+  createdAttendanceSessions AttendanceSession[]
   settings UserSettings?
   notifications Notification[]
   sentInvitations Invitation[]
@@ -51,6 +52,7 @@ model User {
   assignmentViews   StudentAssignmentView[]
   quizViews         StudentQuizView[]
   noteViews         StudentNoteView[]
+  attendanceRecords AttendanceRecord[]
 
   @@map("users")
 }
@@ -118,6 +120,7 @@ model Class {
   practiceFiles PracticeFile[]
   calendarEvents CalendarEvent[]
   invitations Invitation[]
+  attendanceSessions AttendanceSession[]
 
   @@map("classes")
 }
@@ -185,6 +188,7 @@ model Question {
   type        String
   points      Int       @default(1)
   order       Int
+  explanation String?   // Explanation for the correct answer
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -200,6 +204,7 @@ model QuestionOption {
   text       String
   isCorrect  Boolean  @default(false)
   order      Int
+  explanation String? // Explanation for why this option is correct
   createdAt  DateTime @default(now())
 
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
@@ -514,4 +519,38 @@ model Backup {
   updatedAt   DateTime @updatedAt
 
   @@map("backups")
+}
+
+model AttendanceSession {
+  id          String   @id @default(cuid())
+  classId     String
+  professorId String
+  date        DateTime
+  title       String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  professor   User     @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  records     AttendanceRecord[]
+
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id          String   @id @default(cuid())
+  sessionId   String
+  studentId   String
+  status      String   @default("PRESENT") // "PRESENT", "ABSENT", "LATE", "EXCUSED"
+  markedAt    DateTime @default(now())
+  markedBy    String   // Professor ID who marked the attendance
+  notes       String?
+
+  session     AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@map("attendance_records")
 } 

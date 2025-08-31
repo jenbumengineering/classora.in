@@ -466,3 +466,96 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-secondary-400;
 } 
+
+/* Custom styles for resizable table */
+.cursor-col-resize {
+  cursor: col-resize;
+}
+
+.cursor-col-resize:hover {
+  background-color: rgb(59 130 246 / 0.5);
+  opacity: 0.5;
+}
+
+/* Prevent text selection during resize */
+.resizing {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Smooth transitions for column width changes */
+table {
+  transition: none;
+}
+
+th, td {
+  transition: width 0.1s ease;
+}
+
+/* Custom scrollbar for the column settings dropdown */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgb(156 163 175);
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+}
+
+/* Dark mode scrollbar */
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99);
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+} 
+
+/* Custom scrollbar for sidebar navigation */
+nav.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+
+nav.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+nav.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgb(156 163 175);
+  border-radius: 2px;
+}
+
+nav.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+}
+
+/* Dark mode sidebar scrollbar */
+.dark nav.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99);
+}
+
+.dark nav.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+}
+
+/* Hide scrollbar on mobile devices for cleaner look */
+@media (max-width: 768px) {
+  nav.overflow-y-auto::-webkit-scrollbar {
+    width: 0px;
+  }
+  
+  nav.overflow-y-auto {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+} 

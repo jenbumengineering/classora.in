@@ -1,13 +1,13 @@
 import nodemailer from 'nodemailer'
 
-// Email configuration - Using local Postfix mail server
+// Email configuration - Using secure SSL/TLS settings
 const emailConfig = {
-  host: 'mail.classora.in', // Local mail server hostname
-  port: 587, // SMTP submission port
-  secure: false, // Use STARTTLS
+  host: 'server.dnspark.in', // Secure mail server hostname
+  port: 465, // Secure SMTP port
+  secure: true, // Use SSL/TLS
   auth: {
-    user: 'noreply@classora.in',
-    pass: process.env.EMAIL_PASSWORD || 'mail_password_change_this'
+    user: 'support@classora.in',
+    pass: process.env.EMAIL_PASSWORD || 'Unbreakable@7001'
   },
   tls: {
     rejectUnauthorized: false
@@ -323,6 +323,16 @@ export const emailTemplates = {
         </p>
       </div>
     `
+  }),
+
+  // Analytics report email
+  analyticsReport: (data: {
+    title: string
+    content: string
+    date: string
+  }) => ({
+    subject: `${data.title} - ${data.date}`,
+    html: data.content
   })
 }
 
@@ -335,7 +345,7 @@ export async function sendEmail(to: string, template: keyof typeof emailTemplate
     const emailTemplate = emailTemplates[template](data)
     
     const mailOptions = {
-      from: '"Classora" <noreply@classora.in>',
+      from: '"Classora" <support@classora.in>',
       to: to,
       subject: emailTemplate.subject,
       html: emailTemplate.html,
@@ -346,7 +356,7 @@ export async function sendEmail(to: string, template: keyof typeof emailTemplate
         'Importance': 'high',
         'Reply-To': 'support@classora.in',
         'X-Mailer': 'Classora Email System',
-        'List-Unsubscribe': '<mailto:noreply@classora.in?subject=unsubscribe>',
+        'List-Unsubscribe': '<mailto:support@classora.in?subject=unsubscribe>',
         'Precedence': 'bulk'
       }
     }
@@ -434,7 +444,7 @@ export async function sendBackupNotificationEmail(data: {
     const backupFile = fs.readFileSync(data.backupFilePath)
     
     const mailOptions = {
-      from: '"Classora" <noreply@classora.in>',
+      from: '"Classora" <support@classora.in>',
       to: 'jenbumengineering@gmail.com, mainong.jenbum@gmail.com, jenbumacademy@gmail.com',
       subject: emailTemplate.subject,
       html: emailTemplate.html,
@@ -522,13 +532,23 @@ export async function sendPasswordResetEmail(data: {
   return await sendEmail(data.userEmail, 'passwordReset', data)
 }
 
-// Send class invitation email
-export async function sendClassInvitationEmail(data: {
-  studentEmail: string
-  className: string
-  professorName: string
-  invitationUrl: string
-  expiresAt: string
-}) {
-  return await sendEmail(data.studentEmail, 'classInvitation', data)
-}
+  // Send class invitation email
+  export async function sendClassInvitationEmail(data: {
+    studentEmail: string
+    className: string
+    professorName: string
+    invitationUrl: string
+    expiresAt: string
+  }) {
+    return await sendEmail(data.studentEmail, 'classInvitation', data)
+  }
+
+  // Send analytics report email
+  export async function sendAnalyticsReportEmail(data: {
+    userEmail: string
+    title: string
+    content: string
+    date: string
+  }) {
+    return await sendEmail(data.userEmail, 'analyticsReport', data)
+  }

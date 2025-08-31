@@ -14,7 +14,8 @@ import {
   Plus,
   TrendingUp,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Calendar as CalendarIcon
 } from 'lucide-react'
 import Link from 'next/link'
 import BasicClassCard from '@/components/classes/BasicClassCard'
@@ -243,6 +244,12 @@ export function ProfessorDashboard() {
                 <Link href="/dashboard/assignments/new" className="w-full h-full flex flex-col items-center justify-center">
                   <FileText className="h-8 w-8" />
                   <span className="text-sm font-medium">Add Assignment</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-24 p-4 flex flex-col items-center justify-center space-y-3 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <Link href="/dashboard/attendance" className="w-full h-full flex flex-col items-center justify-center">
+                  <CalendarIcon className="h-8 w-8" />
+                  <span className="text-sm font-medium">Mark Attendance</span>
                 </Link>
               </Button>
             </div>

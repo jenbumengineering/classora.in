@@ -90,7 +90,20 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true
           }
+        },
+        // Include submission status for students
+        ...(user?.role === 'STUDENT' ? {
+                  submissions: {
+          where: { studentId: userId },
+          select: { id: true, grade: true }
         }
+        } : {}),
+        // Include submission count for professors
+        ...(user?.role === 'PROFESSOR' ? {
+          _count: {
+            select: { submissions: true }
+          }
+        } : {})
       },
       orderBy: {
         createdAt: 'desc'
@@ -113,7 +126,17 @@ export async function GET(request: NextRequest) {
       noteId: assignment.noteId || null,
       createdAt: assignment.createdAt.toISOString(),
       updatedAt: assignment.updatedAt.toISOString(),
-      professor: assignment.professor
+      professor: assignment.professor,
+      // Add submission status for students
+      ...(user?.role === 'STUDENT' ? {
+        submitted: assignment.submissions && assignment.submissions.length > 0,
+        graded: assignment.submissions && assignment.submissions.some(sub => sub.grade !== null),
+        grade: assignment.submissions && assignment.submissions.length > 0 ? assignment.submissions[0].grade : null
+      } : {}),
+      // Add submission count for professors
+      ...(user?.role === 'PROFESSOR' ? {
+        _count: assignment._count
+      } : {})
     }))
 
     // Get total count for pagination
@@ -171,7 +194,10 @@ export async function POST(request: NextRequest) {
 
     // Verify the user is a professor
     const professor = await prisma.user.findUnique({
-      where: { id: professorId, role: 'PROFESSOR' }
+      where: { 
+        id: professorId, 
+        role: 'PROFESSOR'
+      }
     })
 
     if (!professor) {

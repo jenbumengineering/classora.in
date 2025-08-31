@@ -59,7 +59,13 @@ export async function GET(
             name: true,
             email: true
           }
-        }
+        },
+        // Include submission count for professors
+        ...(user.role === 'PROFESSOR' ? {
+          _count: {
+            select: { submissions: true }
+          }
+        } : {})
       }
     })
 

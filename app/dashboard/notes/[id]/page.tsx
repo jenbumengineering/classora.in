@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
-import { ArrowLeft, BookOpen, FileText, Calendar, Clock, User, Edit, Eye, Target } from 'lucide-react'
+import { ArrowLeft, BookOpen, FileText, Calendar, Clock, User, Edit, Eye, Target, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 
@@ -80,6 +80,32 @@ export default function NoteDetailPage() {
     loadNote()
   }, [user, router, noteId])
 
+  const handleDeleteNote = async () => {
+    if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/notes/${noteId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': user?.id || '',
+        },
+      })
+
+      if (response.ok) {
+        toast.success('Note deleted successfully!')
+        router.push('/dashboard/notes') // Redirect to notes list
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete note')
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete note')
+    }
+  }
+
   const loadNote = async () => {
     try {
       const response = await fetch(`/api/notes/${noteId}`)
@@ -98,6 +124,30 @@ export default function NoteDetailPage() {
           toast.error('You can only view your own notes')
           router.push('/dashboard/notes')
           return
+        }
+
+        // For students, check if they are enrolled in the class
+        if (user?.role === 'STUDENT') {
+          const enrollmentResponse = await fetch(`/api/enrollments?studentId=${user.id}&classId=${noteData.class.id}`, {
+            headers: {
+              'x-user-id': user.id
+            }
+          })
+          
+          if (enrollmentResponse.ok) {
+            const enrollmentData = await enrollmentResponse.json()
+            const isEnrolled = enrollmentData.enrollments.some((e: any) => e.classId === noteData.class.id)
+            
+            if (!isEnrolled) {
+              toast.error('You must be enrolled in this class to view this note')
+              router.push('/dashboard/notes')
+              return
+            }
+          } else {
+            toast.error('Unable to verify enrollment status')
+            router.push('/dashboard/notes')
+            return
+          }
         }
 
         setNote(noteData)
@@ -194,7 +244,7 @@ export default function NoteDetailPage() {
           <div className="container mx-auto px-6 py-8">
             {/* Header */}
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4 mb-6">
                 <Button asChild variant="outline">
                   <Link href="/dashboard/notes">
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -202,12 +252,21 @@ export default function NoteDetailPage() {
                   </Link>
                 </Button>
                 {user?.role === 'PROFESSOR' && note.professor.id === user.id && (
-                  <Button asChild>
-                    <Link href={`/dashboard/notes/${note.id}/edit`}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Note
-                    </Link>
-                  </Button>
+                  <>
+                    <Button asChild>
+                      <Link href={`/dashboard/notes/${note.id}/edit`}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Note
+                      </Link>
+                    </Button>
+                    <Button 
+                      variant="destructive"
+                      onClick={handleDeleteNote}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Note
+                    </Button>
+                  </>
                 )}
               </div>
               <div>

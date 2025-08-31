@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
@@ -18,14 +18,19 @@ import {
   Zap,
   Keyboard,
   Trophy,
-  MessageCircle
+  MessageCircle,
+  Menu,
+  X
 } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useSettings } from '@/components/providers/SettingsProvider'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 export default function HomePage() {
   const { settings, loading } = useSettings()
+  const { user } = useAuth()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const siteName = settings?.siteName || 'Classora.in'
   
   // Show loading state while settings are being fetched
@@ -50,21 +55,97 @@ export default function HomePage() {
               <Logo size="md" variant="full" theme="light" className="dark:hidden" />
               <Logo size="md" variant="full" theme="dark" className="hidden dark:flex" />
             </div>
+            
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
               <a href="#features" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Features</a>
               <a href="#about" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">About</a>
               <Link href="/contact" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Contact</Link>
             </nav>
-            <div className="flex items-center space-x-4">
+            
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center space-x-4">
               <ThemeToggle />
-              <Button asChild variant="outline" className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
-                <Link href="/auth/login">Log In</Link>
-              </Button>
-              <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
-                <Link href="/auth/register">Sign Up</Link>
+              {user ? (
+                <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+                  <Link href="/dashboard">Dashboard</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button asChild variant="outline" className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
+                    <Link href="/auth/login">Log In</Link>
+                  </Button>
+                  <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+                    <Link href="/auth/register">Sign Up</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center space-x-2">
+              <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             </div>
           </div>
+          
+          {/* Mobile Navigation Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-gray-200 dark:border-gray-700">
+              <nav className="flex flex-col space-y-4 mt-4">
+                <a 
+                  href="#features" 
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Features
+                </a>
+                <a 
+                  href="#about" 
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  About
+                </a>
+                <Link 
+                  href="/contact" 
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Contact
+                </Link>
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  {user ? (
+                    <Button asChild className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                      <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                        Dashboard
+                      </Link>
+                    </Button>
+                  ) : (
+                    <div className="flex flex-col space-y-2">
+                      <Button asChild variant="outline" className="w-full dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
+                        <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                          Log In
+                        </Link>
+                      </Button>
+                      <Button asChild className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                        <Link href="/auth/register" onClick={() => setMobileMenuOpen(false)}>
+                          Sign Up
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 

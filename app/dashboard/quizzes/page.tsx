@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { Code, Plus, Edit, Trash2, Play, BarChart3, Eye } from 'lucide-react'
+import { ResizableTable, Column } from '@/components/ui/ResizableTable'
+import { Code, Plus, Edit, Trash2, Play, BarChart3, Eye, Clock, Target, CalendarIcon, Users, HelpCircle, MoreHorizontal, MoreVertical } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 
 interface Quiz {
   id: string
@@ -18,7 +19,7 @@ interface Quiz {
   className: string
   totalQuestions: number
   timeLimit: number
-  maxAttempts: number
+
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED'
   createdAt: string
   attempts?: Array<{
@@ -26,6 +27,15 @@ interface Quiz {
     score: number
     completedAt: string
   }>
+  _count?: {
+    attempts: number
+    questions: number
+  }
+  class?: {
+    name: string
+    gradientColor: string
+    code: string
+  }
 }
 
 export default function QuizzesPage() {
@@ -33,6 +43,7 @@ export default function QuizzesPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null)
+  const router = useRouter()
   
   const isProfessor = user?.role === 'PROFESSOR'
   const isStudent = user?.role === 'STUDENT'
@@ -43,25 +54,48 @@ export default function QuizzesPage() {
     }
   }, [user])
 
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest('.dropdown-container')) {
+        // Close all dropdowns
+        const dropdowns = document.querySelectorAll('[id^="quizzes-dropdown-"]')
+        dropdowns.forEach(dropdown => {
+          dropdown.classList.add('hidden')
+        })
+      }
+    }
+
+    document.addEventListener('click', handleClickOutside)
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [])
+
   const loadQuizzes = async () => {
     if (!user) return
 
     try {
-      const response = await fetch('/api/quizzes', {
-        headers: {
-          'x-user-id': user.id
-        }
-      })
+      const params = new URLSearchParams()
+      
+      if (user.role === 'PROFESSOR') {
+        params.append('professorId', user.id)
+      } else {
+        params.append('status', 'PUBLISHED')
+      }
+
+      const response = await fetch(`/api/quizzes?${params}`)
       if (response.ok) {
         const data = await response.json()
         setQuizzes(data.quizzes || [])
       } else {
         console.error('Failed to load quizzes')
-        toast.error('Failed to load quizzes')
+        setQuizzes([])
       }
     } catch (error) {
       console.error('Error loading quizzes:', error)
-      toast.error('Failed to load quizzes')
+      setQuizzes([])
     } finally {
       setIsLoading(false)
     }
@@ -97,6 +131,140 @@ export default function QuizzesPage() {
     }
   }
 
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      DRAFT: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', label: 'Draft' },
+      PUBLISHED: { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', label: 'Published' },
+      CLOSED: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200', label: 'Closed' }
+    }
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.DRAFT
+    
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
+        {config.label}
+      </span>
+    )
+  }
+
+  const columns: Column[] = [
+    {
+      key: 'title',
+      label: 'Quiz Name',
+      width: 250,
+      minWidth: 200,
+      maxWidth: 400,
+      visible: true,
+      sortable: true,
+      render: (value, row) => (
+        <div className="flex items-center space-x-3">
+          <div className="flex-shrink-0">
+            <Code className="w-5 h-5 text-purple-500" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-gray-900 dark:text-white text-base leading-tight">
+              {row.title}
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'className',
+      label: 'Class Name',
+      width: 200,
+      minWidth: 150,
+      maxWidth: 300,
+      visible: true,
+      sortable: true,
+      render: (value, row) => {
+        const classData = row.class || row.className
+        const className = classData?.name || classData || 'Unknown Class'
+        const classCode = classData?.code || ''
+        
+        return (
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-gray-900 dark:text-white text-sm">
+                {className}
+              </div>
+              {classCode && (
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {classCode}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      }
+    },
+    {
+      key: 'createdAt',
+      label: 'Created Date',
+      width: 150,
+      minWidth: 120,
+      maxWidth: 200,
+      visible: true,
+      sortable: true,
+      render: (value, row) => (
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {new Date(row.createdAt).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      width: 300,
+      minWidth: 200,
+      maxWidth: 500,
+      visible: false,
+      sortable: false,
+      render: (value, row) => (
+        <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+          {row.description.replace(/<[^>]*>/g, '').substring(0, 120)}
+          {row.description.replace(/<[^>]*>/g, '').length > 120 && '...'}
+        </div>
+      )
+    },
+    {
+      key: 'attempts',
+      label: 'Attempts',
+      width: 120,
+      minWidth: 100,
+      maxWidth: 150,
+      visible: false,
+      sortable: true,
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <Users className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-medium text-gray-900 dark:text-white">
+            {row._count?.attempts || 0}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'questions',
+      label: 'Questions',
+      width: 120,
+      minWidth: 100,
+      maxWidth: 150,
+      visible: false,
+      sortable: true,
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <HelpCircle className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-medium text-gray-900 dark:text-white">
+            {row._count?.questions || 0}
+          </span>
+        </div>
+      )
+    },
+
+  ]
+
   return (
     <DashboardLayout>
       {/* Header */}
@@ -128,114 +296,38 @@ export default function QuizzesPage() {
             <LoadingSpinner size="lg" />
           </div>
         ) : quizzes.length === 0 ? (
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <CardContent className="p-12 text-center">
-              <div className="text-gray-500 dark:text-gray-400">
-                <Code className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                <h3 className="text-lg font-medium mb-2">
-                  {isProfessor ? 'No quizzes yet' : 'No quizzes available'}
-                </h3>
-                <p className="mb-4">
-                  {isProfessor 
-                    ? 'Create your first quiz to assess your students\' knowledge'
-                    : 'Quizzes will appear here once your professors create them'
-                  }
-                </p>
-                {isProfessor && (
-                  <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
-                    <Link href="/dashboard/quizzes/new">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Your First Quiz
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {quizzes.map((quiz) => (
-              <Card key={quiz.id} className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-gray-900 dark:text-white">{quiz.title}</CardTitle>
-                      <CardDescription className="text-gray-600 dark:text-gray-400">
-                        {quiz.className}
-                      </CardDescription>
-                    </div>
-                    {isProfessor && (
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                        >
-                          <Link href={`/dashboard/quizzes/${quiz.id}/edit`}>
-                            <Edit className="w-4 h-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteQuiz(quiz.id)}
-                          disabled={deletingQuizId === quiz.id}
-                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                        >
-                          {deletingQuizId === quiz.id ? (
-                            <LoadingSpinner size="sm" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      {quiz.description}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                    <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                      <Code className="w-4 h-4" />
-                      <span>{quiz.totalQuestions} questions</span>
-                    </div>
-                    {quiz.timeLimit > 0 && (
-                      <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                        <Play className="w-4 h-4" />
-                        <span>{quiz.timeLimit} min</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(quiz.createdAt).toLocaleDateString()}
-                    </span>
-                    <div className="flex space-x-2">
-                      <Button asChild variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <Link href={`/dashboard/quizzes/${quiz.id}`}>
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Link>
-                      </Button>
-                      {isProfessor && (
-                        <Button asChild variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                          <Link href={`/dashboard/quizzes/${quiz.id}/stats`}>
-                            <BarChart3 className="w-4 h-4 mr-1" />
-                            Stats
-                          </Link>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+            <div className="text-gray-500 dark:text-gray-400">
+              <Code className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+              <h3 className="text-lg font-medium mb-2">
+                {isProfessor ? 'No quizzes yet' : 'No quizzes available'}
+              </h3>
+              <p className="mb-4">
+                {isProfessor 
+                  ? 'Create your first quiz to assess your students\' knowledge'
+                  : 'Quizzes will appear here once your professors create them'
+                }
+              </p>
+              {isProfessor && (
+                <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white">
+                  <Link href="/dashboard/quizzes/new">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Quiz
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
+        ) : (
+          <ResizableTable
+            columns={columns}
+            data={quizzes}
+            title="Quizzes List"
+            description={`${quizzes.length} quiz${quizzes.length !== 1 ? 'zes' : ''} found`}
+            onRowClick={(row) => {
+              router.push(`/dashboard/quizzes/${row.id}`)
+            }}
+          />
         )}
       </div>
     </DashboardLayout>

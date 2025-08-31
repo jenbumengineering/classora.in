@@ -17,7 +17,7 @@ interface Quiz {
   title: string
   description: string
   timeLimit: number
-  maxAttempts: number
+
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED'
   classId: string
   class: {
@@ -39,10 +39,12 @@ interface Question {
   question: string
   type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'MULTIPLE_SELECTION' | 'SHORT_ANSWER'
   points: number
+  explanation?: string
   options?: Array<{
     id: string
     text: string
     isCorrect: boolean
+    explanation?: string
   }>
 }
 
@@ -67,6 +69,8 @@ export default function TakeQuizPage() {
   const [startTime, setStartTime] = useState<Date | null>(null)
   const [attempts, setAttempts] = useState<QuizAttempt[]>([])
   const [currentAttemptNumber, setCurrentAttemptNumber] = useState(0)
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set())
+  const [questionResults, setQuestionResults] = useState<Map<string, { isCorrect: boolean; explanation?: string }>>(new Map())
 
   const quizId = params.id as string
 
@@ -111,6 +115,29 @@ export default function TakeQuizPage() {
       
       if (response.ok) {
         const quizData = await response.json()
+        
+        // Check if student is enrolled in the class
+        const enrollmentResponse = await fetch(`/api/enrollments?studentId=${user?.id}&classId=${quizData.class.id}`, {
+          headers: {
+            'x-user-id': user?.id || ''
+          }
+        })
+        
+        if (enrollmentResponse.ok) {
+          const enrollmentData = await enrollmentResponse.json()
+          const isEnrolled = enrollmentData.enrollments.some((e: any) => e.classId === quizData.class.id)
+          
+          if (!isEnrolled) {
+            toast.error('You must be enrolled in this class to take this quiz')
+            router.push('/dashboard/quizzes')
+            return
+          }
+        } else {
+          toast.error('Unable to verify enrollment status')
+          router.push('/dashboard/quizzes')
+          return
+        }
+        
         setQuiz(quizData)
         setQuestions(quizData.questions)
         
@@ -163,20 +190,66 @@ export default function TakeQuizPage() {
     ))
   }
 
-  const handleOptionSelect = (questionId: string, optionText: string, isMultiple: boolean = false) => {
+  const handleOptionSelect = (questionId: string, optionId: string, isMultiple: boolean = false) => {
     const currentAnswer = answers.find(a => a.questionId === questionId)
     
     if (isMultiple) {
       // Multiple selection
       const currentOptions = currentAnswer?.selectedOptions || []
-      const newOptions = currentOptions.includes(optionText)
-        ? currentOptions.filter(opt => opt !== optionText)
-        : [...currentOptions, optionText]
+      const newOptions = currentOptions.includes(optionId)
+        ? currentOptions.filter(opt => opt !== optionId)
+        : [...currentOptions, optionId]
       
       updateAnswer(questionId, { selectedOptions: newOptions })
     } else {
       // Single selection
-      updateAnswer(questionId, { selectedOptions: [optionText] })
+      updateAnswer(questionId, { selectedOptions: [optionId] })
+    }
+  }
+
+  const evaluateCurrentQuestion = () => {
+    const currentQuestion = questions[currentQuestionIndex]
+    if (!currentQuestion) return
+
+    const currentAnswer = answers.find(a => a.questionId === currentQuestion.id)
+    if (!currentAnswer || !currentAnswer.selectedOptions || currentAnswer.selectedOptions.length === 0) return
+
+    // Check if answer is correct
+    let isCorrect = false
+
+    if (currentQuestion.type === 'MULTIPLE_CHOICE') {
+      const correctOption = currentQuestion.options?.find(opt => opt.isCorrect)
+      isCorrect = currentAnswer.selectedOptions[0] === correctOption?.id
+    } else if (currentQuestion.type === 'MULTIPLE_SELECTION') {
+      const correctOptionIds = currentQuestion.options?.filter(opt => opt.isCorrect).map(opt => opt.id) || []
+      const selectedOptionIds = currentAnswer.selectedOptions
+      isCorrect = correctOptionIds.length === selectedOptionIds.length &&
+                  correctOptionIds.every(id => selectedOptionIds.includes(id))
+    } else if (currentQuestion.type === 'TRUE_FALSE') {
+      const correctOption = currentQuestion.options?.find(opt => opt.isCorrect)
+      isCorrect = currentAnswer.selectedOptions[0] === correctOption?.id
+    }
+
+    // Only show explanation for correct answers
+    const explanation = isCorrect ? currentQuestion.explanation || '' : ''
+
+    // Update results
+    setQuestionResults(prev => new Map(prev).set(currentQuestion.id, { isCorrect, explanation }))
+    setAnsweredQuestions(prev => new Set(prev).add(currentQuestion.id))
+  }
+
+  const handleNextQuestion = () => {
+    // Evaluate current question before moving to next
+    evaluateCurrentQuestion()
+    
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1)
+    }
+  }
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1)
     }
   }
 
@@ -222,6 +295,8 @@ export default function TakeQuizPage() {
 
   const renderQuestion = (question: Question, index: number) => {
     const currentAnswer = answers.find(a => a.questionId === question.id)
+    const questionResult = questionResults.get(question.id)
+    const isAnswered = answeredQuestions.has(question.id)
 
     switch (question.type) {
       case 'MULTIPLE_CHOICE':
@@ -232,9 +307,9 @@ export default function TakeQuizPage() {
                 <input
                   type="radio"
                   name={`question-${question.id}`}
-                  value={option.text}
-                  checked={currentAnswer?.selectedOptions?.includes(option.text) || false}
-                  onChange={() => handleOptionSelect(question.id, option.text)}
+                  value={option.id}
+                  checked={currentAnswer?.selectedOptions?.includes(option.id) || false}
+                  onChange={() => handleOptionSelect(question.id, option.id)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-gray-900">{option.text}</span>
@@ -250,9 +325,9 @@ export default function TakeQuizPage() {
               <label key={option.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
                 <input
                   type="checkbox"
-                  value={option.text}
-                  checked={currentAnswer?.selectedOptions?.includes(option.text) || false}
-                  onChange={() => handleOptionSelect(question.id, option.text, true)}
+                  value={option.id}
+                  checked={currentAnswer?.selectedOptions?.includes(option.id) || false}
+                  onChange={() => handleOptionSelect(question.id, option.id, true)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-gray-900">{option.text}</span>
@@ -264,28 +339,19 @@ export default function TakeQuizPage() {
       case 'TRUE_FALSE':
         return (
           <div className="space-y-3">
-            <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input
-                type="radio"
-                name={`question-${question.id}`}
-                value="true"
-                checked={currentAnswer?.selectedOptions?.includes('true') || false}
-                onChange={() => handleOptionSelect(question.id, 'true')}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-gray-900">True</span>
-            </label>
-            <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input
-                type="radio"
-                name={`question-${question.id}`}
-                value="false"
-                checked={currentAnswer?.selectedOptions?.includes('false') || false}
-                onChange={() => handleOptionSelect(question.id, 'false')}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-gray-900">False</span>
-            </label>
+            {question.options?.map((option, optionIndex) => (
+              <label key={option.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`question-${question.id}`}
+                  value={option.id}
+                  checked={currentAnswer?.selectedOptions?.includes(option.id) || false}
+                  onChange={() => handleOptionSelect(question.id, option.id)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-gray-900">{option.text}</span>
+              </label>
+            ))}
           </div>
         )
 
@@ -416,13 +482,34 @@ export default function TakeQuizPage() {
                     </div>
                     
                     {currentQuestion && renderQuestion(currentQuestion, currentQuestionIndex)}
+                    
+                    {/* Show explanation only for correct answers */}
+                    {questionResults.get(currentQuestion.id)?.isCorrect && questionResults.get(currentQuestion.id)?.explanation && (
+                      <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <div className="flex-shrink-0">
+                            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-green-800">
+                              Correct! Here's why:
+                            </h4>
+                            <p className="mt-1 text-sm text-green-700">
+                              {questionResults.get(currentQuestion.id)?.explanation}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
                 {/* Navigation */}
                 <div className="flex justify-between mt-6">
                   <Button
-                    onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                    onClick={handlePreviousQuestion}
                     disabled={currentQuestionIndex === 0}
                     variant="outline"
                   >
@@ -432,7 +519,7 @@ export default function TakeQuizPage() {
                   <div className="flex space-x-3">
                     {currentQuestionIndex < totalQuestions - 1 ? (
                       <Button
-                        onClick={() => setCurrentQuestionIndex(prev => Math.min(totalQuestions - 1, prev + 1))}
+                        onClick={handleNextQuestion}
                       >
                         Next
                       </Button>
@@ -474,6 +561,8 @@ export default function TakeQuizPage() {
                           (answer.selectedOptions && answer.selectedOptions.length > 0) ||
                           answer.textAnswer?.trim()
                         )
+                        const isAnswered = answeredQuestions.has(question.id)
+                        const isCorrect = questionResults.get(question.id)?.isCorrect
                         
                         return (
                           <button
@@ -482,14 +571,20 @@ export default function TakeQuizPage() {
                             className={`w-full text-left p-3 rounded-lg border transition-colors ${
                               index === currentQuestionIndex
                                 ? 'border-blue-500 bg-blue-50'
-                                : hasAnswer
+                                : isAnswered && isCorrect
                                 ? 'border-green-500 bg-green-50'
+                                : isAnswered && !isCorrect
+                                ? 'border-red-500 bg-red-50'
+                                : hasAnswer
+                                ? 'border-yellow-500 bg-yellow-50'
                                 : 'border-gray-200 bg-white hover:bg-gray-50'
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-medium">Question {index + 1}</span>
-                              {hasAnswer && <Check className="w-4 h-4 text-green-600" />}
+                              {isAnswered && isCorrect && <Check className="w-4 h-4 text-green-600" />}
+                              {isAnswered && !isCorrect && <X className="w-4 h-4 text-red-600" />}
+                              {hasAnswer && !isAnswered && <div className="w-4 h-4 border-2 border-yellow-400 rounded-full" />}
                             </div>
                             <p className="text-sm text-gray-600 mt-1">{question.type.replace('_', ' ')}</p>
                           </button>

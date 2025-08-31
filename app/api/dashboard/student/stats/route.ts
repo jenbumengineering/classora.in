@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
     const now = new Date()
     const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000))
     
-    // Get upcoming assignments
+    // Get upcoming assignments with completion status
     const upcomingAssignments = await prisma.assignment.findMany({
       where: {
         classId: {
@@ -189,6 +189,10 @@ export async function GET(request: NextRequest) {
           select: {
             code: true
           }
+        },
+        submissions: {
+          where: { studentId },
+          select: { id: true, grade: true }
         }
       },
       orderBy: {
@@ -196,7 +200,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Get upcoming quizzes
+    // Get upcoming quizzes with completion status
     const upcomingQuizzes = await prisma.quiz.findMany({
       where: {
         classId: {
@@ -209,6 +213,10 @@ export async function GET(request: NextRequest) {
           select: {
             code: true
           }
+        },
+        attempts: {
+          where: { studentId },
+          select: { id: true }
         }
       },
       orderBy: {
@@ -216,21 +224,26 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Combine and format upcoming deadlines
+    // Combine and format upcoming deadlines with completion status
     const upcomingDeadlinesList = [
       ...upcomingAssignments.map(assignment => ({
         id: `assignment-${assignment.id}`,
         type: 'assignment' as const,
         title: assignment.title,
         class: assignment.class.code,
-        dueDate: formatDueDate(assignment.dueDate)
+        dueDate: formatDueDate(assignment.dueDate),
+        completed: assignment.submissions.length > 0,
+        graded: assignment.submissions.some(sub => sub.grade !== null),
+        assignmentId: assignment.id
       })),
       ...upcomingQuizzes.map(quiz => ({
         id: `quiz-${quiz.id}`,
         type: 'quiz' as const,
         title: quiz.title,
         class: quiz.class.code,
-        dueDate: 'Available now'
+        dueDate: 'Available now',
+        completed: quiz.attempts.length > 0,
+        quizId: quiz.id
       }))
     ].sort((a, b) => {
       // Sort assignments by due date, quizzes after

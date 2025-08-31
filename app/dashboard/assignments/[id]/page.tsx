@@ -8,7 +8,7 @@ import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { ArrowLeft, Edit, Calendar, BookOpen, FileText, Users, Download, Upload, CheckCircle, XCircle } from 'lucide-react'
+import { ArrowLeft, Edit, Calendar, BookOpen, FileText, Users, Download, Upload, CheckCircle, XCircle, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { StudentSubmissionsSection } from '@/components/dashboard/StudentSubmissionsSection'
@@ -29,6 +29,9 @@ interface Assignment {
     id: string
     name: string
     email: string
+  }
+  _count?: {
+    submissions: number
   }
 }
 
@@ -74,6 +77,31 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
       })
       if (response.ok) {
         const data = await response.json()
+        
+        // For students, check if they are enrolled in the class
+        if (user?.role === 'STUDENT') {
+          const enrollmentResponse = await fetch(`/api/enrollments?studentId=${user.id}&classId=${data.classId}`, {
+            headers: {
+              'x-user-id': user.id
+            }
+          })
+          
+          if (enrollmentResponse.ok) {
+            const enrollmentData = await enrollmentResponse.json()
+            const isEnrolled = enrollmentData.enrollments.some((e: any) => e.classId === data.classId)
+            
+            if (!isEnrolled) {
+              toast.error('You must be enrolled in this class to view this assignment')
+              router.push('/dashboard/assignments')
+              return
+            }
+          } else {
+            toast.error('Unable to verify enrollment status')
+            router.push('/dashboard/assignments')
+            return
+          }
+        }
+        
         setAssignment(data)
       } else if (response.status === 404) {
         toast.error('Assignment not found')
@@ -89,6 +117,32 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
     } finally {
       setIsLoadingAssignment(false)
       setIsLoading(false)
+    }
+  }
+
+  const handleDeleteAssignment = async () => {
+    if (!confirm('Are you sure you want to delete this assignment? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/assignments/${params.id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': user?.id || '',
+        },
+      })
+
+      if (response.ok) {
+        toast.success('Assignment deleted successfully!')
+        router.push('/dashboard/assignments') // Redirect to assignments list
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete assignment')
+      }
+    } catch (error) {
+      console.error('Error deleting assignment:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete assignment')
     }
   }
 
@@ -175,6 +229,8 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
     if (!assignment || user?.role !== 'STUDENT') return false
     if (assignment.status !== 'PUBLISHED') return false
     if (isAssignmentOverdue()) return false
+    // Prevent resubmission if assignment is graded
+    if (submission && submission.grade !== null) return false
     return true
   }
 
@@ -259,12 +315,21 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
                   </Link>
                 </Button>
                 {user?.role === 'PROFESSOR' && (
-                  <Button asChild>
-                    <Link href={`/dashboard/assignments/${assignment.id}/edit`}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit Assignment
-                    </Link>
-                  </Button>
+                  <>
+                    <Button asChild>
+                      <Link href={`/dashboard/assignments/${assignment.id}/edit`}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Assignment
+                      </Link>
+                    </Button>
+                    <Button 
+                      variant="destructive"
+                      onClick={handleDeleteAssignment}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Assignment
+                    </Button>
+                  </>
                 )}
               </div>
               <div className="flex justify-between items-start">
@@ -349,6 +414,98 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
                 </CardContent>
               </Card>
 
+              {/* Assignment Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Assignment Summary</CardTitle>
+                  <CardDescription>
+                    {user?.role === 'PROFESSOR' ? 'Submission statistics and overview' : 'Your submission status and grade'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {user?.role === 'PROFESSOR' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600 mb-2">
+                          {assignment._count?.submissions || 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Total Submissions</div>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600 mb-2">
+                          {assignment._count?.submissions || 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Submitted</div>
+                      </div>
+                      <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                        <div className="text-2xl font-bold text-yellow-600 mb-2">
+                          {assignment._count?.submissions ? 
+                            Math.round((assignment._count.submissions / (assignment._count?.submissions || 1)) * 100) : 0
+                          }%
+                        </div>
+                        <div className="text-sm text-gray-600">Submission Rate</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {submission ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="p-4 bg-green-50 rounded-lg">
+                            <div className="flex items-center space-x-2 text-green-600 mb-2">
+                              <CheckCircle className="w-5 h-5" />
+                              <span className="font-medium">Submission Status</span>
+                            </div>
+                            <div className="text-sm text-gray-700">
+                              <strong>Status:</strong> {submission.grade !== null ? 'Graded' : 'Submitted'}
+                            </div>
+                            <div className="text-sm text-gray-700">
+                              <strong>Submitted:</strong> {new Date(submission.submittedAt).toLocaleString()}
+                            </div>
+                            {submission.grade !== null && (
+                              <div className="text-sm text-gray-700">
+                                <strong>Grade:</strong> {submission.grade} points
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-4 bg-blue-50 rounded-lg">
+                            <div className="flex items-center space-x-2 text-blue-600 mb-2">
+                              <FileText className="w-5 h-5" />
+                              <span className="font-medium">Assignment File</span>
+                            </div>
+                            <div className="text-sm text-gray-700 mb-2">
+                              Your submitted file is available for download
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              asChild
+                            >
+                              <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer">
+                                <Download className="w-4 h-4 mr-2" />
+                                Download Submission
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-yellow-50 rounded-lg">
+                          <div className="flex items-center space-x-2 text-yellow-600 mb-2">
+                            <Clock className="w-5 h-5" />
+                            <span className="font-medium">Not Submitted</span>
+                          </div>
+                          <div className="text-sm text-gray-700">
+                            You haven't submitted this assignment yet. 
+                            {assignment.dueDate && new Date(assignment.dueDate) < new Date() && (
+                              <span className="text-red-600 font-medium"> This assignment is overdue.</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Student Actions (if student) */}
               {user?.role === 'STUDENT' && (
                 <Card>
@@ -408,7 +565,17 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
                         )}
 
                         {/* Resubmission Section */}
-                        {canSubmit() && (
+                        {submission && submission.grade !== null ? (
+                          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex items-center space-x-2 text-gray-700 mb-3">
+                              <XCircle className="w-5 h-5" />
+                              <span className="font-medium">Assignment Graded</span>
+                            </div>
+                            <p className="text-sm text-gray-700 mb-4">
+                              This assignment has been graded and cannot be resubmitted. Contact your professor if you need to discuss your grade.
+                            </p>
+                          </div>
+                        ) : canSubmit() ? (
                           <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                             <div className="flex items-center space-x-2 text-yellow-700 mb-3">
                               <Upload className="w-5 h-5" />
@@ -474,7 +641,7 @@ export default function AssignmentViewPage({ params }: { params: { id: string } 
                               </div>
                             </div>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     ) : (
                       <div className="space-y-4">

@@ -15,7 +15,8 @@ const updateQuizSchema = z.object({
     options: z.array(z.string()).optional(),
     correctAnswer: z.string().optional(),
     correctAnswers: z.array(z.string()).optional(),
-    points: z.number().min(1).max(10).default(1)
+    points: z.number().min(1).max(10).default(1),
+    explanation: z.string().optional()
   })).optional()
 })
 
@@ -140,12 +141,36 @@ export async function PUT(
               question: questionData.text,
               type: questionData.type,
               points: questionData.points,
-              order: i + 1
+              order: i + 1,
+              explanation: questionData.explanation || null
             }
           })
 
-          // Handle options for multiple choice and multiple selection
-          if (questionData.options && questionData.options.length > 0) {
+          // Handle options for different question types
+          if (questionData.type === 'TRUE_FALSE') {
+            // Create True and False options for TRUE_FALSE questions
+            const trueFalseOptions = [
+              {
+                questionId: question.id,
+                text: 'True',
+                isCorrect: questionData.correctAnswer === 'true',
+                order: 1,
+                explanation: questionData.explanation || null
+              },
+              {
+                questionId: question.id,
+                text: 'False',
+                isCorrect: questionData.correctAnswer === 'false',
+                order: 2,
+                explanation: questionData.explanation || null
+              }
+            ]
+            
+            await tx.questionOption.createMany({
+              data: trueFalseOptions
+            })
+          } else if (questionData.options && questionData.options.length > 0) {
+            // Handle options for multiple choice and multiple selection
             const optionsData = questionData.options.map((optionText, index) => ({
               questionId: question.id,
               text: optionText,
@@ -154,7 +179,8 @@ export async function PUT(
                 : questionData.type === 'MULTIPLE_SELECTION'
                 ? questionData.correctAnswers?.includes(optionText) || false
                 : false,
-              order: index + 1
+              order: index + 1,
+              explanation: null
             }))
             
             await tx.questionOption.createMany({

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { SunEditorComponent } from '@/components/ui/SunEditor'
-import { ArrowLeft, Save, Eye, EyeOff, BookOpen } from 'lucide-react'
+import { ArrowLeft, Save, Eye, EyeOff, BookOpen, Upload, X, FileText, FileSpreadsheet, File } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 
@@ -20,6 +20,14 @@ interface Class {
   description?: string
 }
 
+interface UploadedFile {
+  id: string
+  name: string
+  size: number
+  type: string
+  url: string
+}
+
 function NewNotePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -28,6 +36,8 @@ function NewNotePageContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [classes, setClasses] = useState<Class[]>([])
   const [selectedClassId, setSelectedClassId] = useState('')
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -75,6 +85,71 @@ function NewNotePageContent() {
     }
   }
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files || files.length === 0) return
+
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword']
+    const maxSize = 10 * 1024 * 1024 // 10MB
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`${file.name} is not a supported file type. Please upload PDF, Excel, or Word files.`)
+        continue
+      }
+
+      if (file.size > maxSize) {
+        toast.error(`${file.name} is too large. Maximum file size is 10MB.`)
+        continue
+      }
+
+      setIsUploading(true)
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('/api/upload-file', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (response.ok) {
+          const uploadedFile = await response.json()
+          setUploadedFiles(prev => [...prev, uploadedFile])
+          toast.success(`${file.name} uploaded successfully`)
+        } else {
+          const error = await response.json()
+          throw new Error(error.error || 'Upload failed')
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error)
+        toast.error(`Failed to upload ${file.name}`)
+      } finally {
+        setIsUploading(false)
+      }
+    }
+  }
+
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(file => file.id !== fileId))
+  }
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.includes('pdf')) return <FileText className="w-4 h-4" />
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return <FileSpreadsheet className="w-4 h-4" />
+    return <File className="w-4 h-4" />
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
   const handleSubmit = async (e: React.FormEvent, status?: string) => {
     e.preventDefault()
     
@@ -88,8 +163,9 @@ function NewNotePageContent() {
       return
     }
 
-    if (!formData.content.trim()) {
-      toast.error('Please enter content')
+    // Check if at least content or files are provided
+    if (!formData.content.trim() && uploadedFiles.length === 0) {
+      toast.error('Please provide either content or upload a file (or both)')
       return
     }
 
@@ -106,6 +182,7 @@ function NewNotePageContent() {
         body: JSON.stringify({
           ...submitData,
           classId: selectedClassId,
+          fileIds: uploadedFiles.map(file => file.id),
         }),
       })
 
@@ -187,7 +264,7 @@ function NewNotePageContent() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Create New Note</h1>
-                <p className="text-gray-600 mt-2">Add a new note to your class</p>
+                <p className="text-gray-600 mt-2">Add a new note to your class with content and/or files</p>
               </div>
             </div>
 
@@ -197,7 +274,7 @@ function NewNotePageContent() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Note Details</CardTitle>
-                    <CardDescription>Fill in the details for your new note</CardDescription>
+                    <CardDescription>Fill in the details for your new note. You can provide content, upload files, or both.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -236,16 +313,70 @@ function NewNotePageContent() {
                         />
                       </div>
 
+                      {/* File Upload */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Upload Files (Optional)
+                        </label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                          <input
+                            type="file"
+                            multiple
+                            accept=".pdf,.doc,.docx,.xls,.xlsx"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="file-upload"
+                            disabled={isUploading}
+                          />
+                          <label htmlFor="file-upload" className="cursor-pointer">
+                            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600">
+                              {isUploading ? 'Uploading...' : 'Click to upload files or drag and drop'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              PDF, Excel, Word files up to 10MB
+                            </p>
+                          </label>
+                        </div>
+                        
+                        {/* Uploaded Files List */}
+                        {uploadedFiles.length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            <h4 className="text-sm font-medium text-gray-700">Uploaded Files:</h4>
+                            {uploadedFiles.map((file) => (
+                              <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  {getFileIcon(file.type)}
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                                    <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeFile(file.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
                       {/* Content */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Content *
+                          Content (Optional)
                         </label>
-                                    <SunEditorComponent
-              value={formData.content}
-              onChange={handleContentChange}
-              placeholder="Enter note content..."
-            />
+                        <SunEditorComponent
+                          value={formData.content}
+                          onChange={handleContentChange}
+                          placeholder="Enter note content... (optional if files are uploaded)"
+                        />
                       </div>
 
                       {/* Action Buttons */}
@@ -253,7 +384,7 @@ function NewNotePageContent() {
                         <Button
                           type="button"
                           onClick={handleSaveDraft}
-                          disabled={isLoading}
+                          disabled={isLoading || isUploading}
                           variant="outline"
                         >
                           {isLoading ? <LoadingSpinner size="sm" /> : <Save className="w-4 h-4 mr-2" />}
@@ -262,7 +393,7 @@ function NewNotePageContent() {
                         <Button
                           type="button"
                           onClick={handlePublish}
-                          disabled={isLoading}
+                          disabled={isLoading || isUploading}
                         >
                           {isLoading ? <LoadingSpinner size="sm" /> : <Eye className="w-4 h-4 mr-2" />}
                           Publish Note
@@ -270,7 +401,7 @@ function NewNotePageContent() {
                         <Button
                           type="button"
                           onClick={handlePrivate}
-                          disabled={isLoading}
+                          disabled={isLoading || isUploading}
                           variant="outline"
                         >
                           {isLoading ? <LoadingSpinner size="sm" /> : <EyeOff className="w-4 h-4 mr-2" />}
@@ -280,7 +411,7 @@ function NewNotePageContent() {
                           type="button"
                           variant="ghost"
                           onClick={() => router.push('/dashboard/notes')}
-                          disabled={isLoading}
+                          disabled={isLoading || isUploading}
                         >
                           Cancel
                         </Button>
@@ -322,6 +453,7 @@ function NewNotePageContent() {
                     <CardTitle>Tips</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-gray-600">
+                    <p>• Provide either content, files, or both</p>
                     <p>• Use clear, descriptive titles</p>
                     <p>• Structure your content with headings</p>
                     <p>• Include code examples when relevant</p>

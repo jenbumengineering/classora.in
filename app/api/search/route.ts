@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       id: string
       title: string
       subtitle?: string
-      type: 'class' | 'note' | 'quiz' | 'assignment'
+      type: 'class' | 'note' | 'quiz' | 'assignment' | 'student'
     }> = []
 
     if (user.role === 'PROFESSOR') {
@@ -146,6 +146,59 @@ export async function GET(request: NextRequest) {
           title: assignment.title,
           subtitle: assignment.description || undefined,
           type: 'assignment'
+        })
+      })
+
+      // Search students enrolled in professor's classes
+      const enrollments = await prisma.enrollment.findMany({
+        where: {
+          class: {
+            professorId: userId
+          },
+          student: {
+            OR: [
+              { name: { contains: searchTerm } },
+              { email: { contains: searchTerm } }
+            ]
+          }
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          class: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          }
+        },
+        take: 5
+      })
+
+      // Group enrollments by student to avoid duplicates
+      const studentMap = new Map()
+      enrollments.forEach(enrollment => {
+        if (!studentMap.has(enrollment.student.id)) {
+          studentMap.set(enrollment.student.id, {
+            student: enrollment.student,
+            classes: []
+          })
+        }
+        studentMap.get(enrollment.student.id).classes.push(enrollment.class)
+      })
+
+      studentMap.forEach(({ student, classes }) => {
+        results.push({
+          id: student.id,
+          title: student.name,
+          subtitle: `${student.email} • ${classes.map(c => c.code).join(', ')}`,
+          type: 'student'
         })
       })
 

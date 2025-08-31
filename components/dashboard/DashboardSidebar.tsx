@@ -37,6 +37,7 @@ export function DashboardSidebar({
     { href: '/dashboard/assignments', label: 'Assignments', icon: FileText },
     { href: '/dashboard/quizzes', label: 'Quizzes', icon: Code },
     { href: '/dashboard/practice', label: 'Practice', icon: Target },
+    { href: '/dashboard/attendance', label: 'Attendance', icon: Calendar },
     { href: '/dashboard/students', label: 'Students', icon: Users },
     { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
     { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
@@ -50,6 +51,7 @@ export function DashboardSidebar({
     { href: '/dashboard/assignments', label: 'Assignments', icon: FileText },
     { href: '/dashboard/quizzes', label: 'Quizzes', icon: Code },
     { href: '/dashboard/practice', label: 'Practice', icon: Target },
+    { href: '/dashboard/attendance/student', label: 'Attendance', icon: Calendar },
     { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]
@@ -82,8 +84,8 @@ export function DashboardSidebar({
         md:translate-x-0 md:static md:inset-0
       `}>
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          {/* Header - Fixed */}
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             {!isCollapsed && (
               <div className="flex items-center">
                 <Logo size="sm" variant="full" theme="light" className="dark:hidden" />
@@ -116,8 +118,8 @@ export function DashboardSidebar({
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          {/* Navigation - Scrollable */}
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon
               return (
@@ -139,9 +141,9 @@ export function DashboardSidebar({
             })}
           </nav>
 
-          {/* Quick Actions for Professors */}
+          {/* Quick Actions for Professors - Fixed */}
           {userRole === 'PROFESSOR' && !isCollapsed && (
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Quick Actions</h3>
               <div className="space-y-2">
                 <Button asChild variant="outline" size="sm" className="w-full flex items-center justify-start border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -166,8 +168,8 @@ export function DashboardSidebar({
             </div>
           )}
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Footer - Fixed */}
+          <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700">
             {!isCollapsed && (
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 <p>© 2025 {siteName}</p>

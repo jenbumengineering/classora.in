@@ -69,12 +69,17 @@ export default function ClassesPage() {
   const router = useRouter()
   const { user } = useAuth()
 
+  // Load enrolled classes when user changes
   useEffect(() => {
-    loadClasses()
-    if (user?.role === 'STUDENT') {
+    if (user?.id && user?.role === 'STUDENT') {
       loadEnrolledClasses()
     }
-  }, [user, searchQuery, selectedProfessor, selectedUniversity, includeArchived, includePrivate])
+  }, [user?.id, user?.role])
+
+  // Load classes when filters change
+  useEffect(() => {
+    loadClasses()
+  }, [searchQuery, selectedProfessor, selectedUniversity, includeArchived, includePrivate])
 
   const loadClasses = async (offset = 0) => {
     try {
@@ -125,7 +130,11 @@ export default function ClassesPage() {
     if (!user) return
 
     try {
-      const response = await fetch(`/api/enrollments?studentId=${user.id}`)
+      const response = await fetch(`/api/enrollments?studentId=${user.id}`, {
+        headers: {
+          'x-user-id': user.id
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         const enrolledIds = data.enrollments?.map((enrollment: any) => enrollment.class.id) || []

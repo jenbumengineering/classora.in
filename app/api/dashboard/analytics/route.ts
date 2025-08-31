@@ -180,6 +180,182 @@ export async function GET(request: NextRequest) {
       ? Math.round(totalContent / totalStudents)
       : 0
 
+    // Generate detailed class analytics
+    const classAnalytics = await Promise.all(classes.map(async (classItem) => {
+      // Get attendance data for this class
+      const attendanceSessions = await prisma.attendanceSession.findMany({
+        where: { classId: classItem.id },
+        include: {
+          records: {
+            include: {
+              student: true
+            }
+          }
+        }
+      })
+
+      // Calculate attendance statistics
+      const allAttendanceRecords = attendanceSessions.flatMap(session => session.records)
+      const totalSessions = attendanceSessions.length
+      const presentCount = allAttendanceRecords.filter(record => record.status === 'PRESENT').length
+      const absentCount = allAttendanceRecords.filter(record => record.status === 'ABSENT').length
+      const lateCount = allAttendanceRecords.filter(record => record.status === 'LATE').length
+      const excusedCount = allAttendanceRecords.filter(record => record.status === 'EXCUSED').length
+      const averageAttendance = totalSessions > 0 ? (presentCount / (presentCount + absentCount + lateCount + excusedCount)) * 100 : 0
+
+      // Calculate attendance by student
+      const attendanceByStudent = new Map<string, { present: number, total: number, studentName: string, studentEmail: string }>()
+      allAttendanceRecords.forEach(record => {
+        const key = record.studentId
+        const current = attendanceByStudent.get(key) || { present: 0, total: 0, studentName: record.student.name, studentEmail: record.student.email }
+        current.total++
+        if (record.status === 'PRESENT') current.present++
+        attendanceByStudent.set(key, current)
+      })
+
+      const topAttendees = Array.from(attendanceByStudent.entries())
+        .map(([studentId, data]) => {
+          // Use weighted attendance calculation (Option 3)
+          // PRESENT: 100% weight, LATE: 50% weight, EXCUSED: 75% weight, ABSENT: 0% weight
+          const weightedAttendance = (data.present * 1.0) + (data.late * 0.5) + (data.excused * 0.75) + (data.absent * 0.0)
+          
+          return {
+            studentName: data.studentName,
+            studentEmail: data.studentEmail,
+            attendanceRate: data.total > 0 ? (weightedAttendance / data.total) * 100 : 0,
+            presentSessions: data.present
+          }
+        })
+        .sort((a, b) => b.attendanceRate - a.attendanceRate)
+        .slice(0, 5)
+
+      // Calculate quiz performance for this class
+      const classQuizAttempts = classItem.quizzes.flatMap(quiz => quiz.attempts)
+      const quizScoresByStudent = new Map<string, { scores: number[], attempts: number, studentName: string, studentEmail: string }>()
+      
+      classQuizAttempts.forEach(attempt => {
+        const key = attempt.studentId
+        const current = quizScoresByStudent.get(key) || { scores: [], attempts: 0, studentName: '', studentEmail: '' }
+        current.scores.push(attempt.score || 0)
+        current.attempts++
+        quizScoresByStudent.set(key, current)
+      })
+
+      // Get student names for quiz attempts
+      const studentIds = Array.from(quizScoresByStudent.keys())
+      const students = await prisma.user.findMany({
+        where: { id: { in: studentIds } },
+        select: { id: true, name: true, email: true }
+      })
+
+      students.forEach(student => {
+        const data = quizScoresByStudent.get(student.id)
+        if (data) {
+          data.studentName = student.name
+          data.studentEmail = student.email
+        }
+      })
+
+      const topQuizPerformers = Array.from(quizScoresByStudent.entries())
+        .map(([studentId, data]) => ({
+          studentName: data.studentName,
+          studentEmail: data.studentEmail,
+          averageScore: data.scores.length > 0 ? data.scores.reduce((sum, score) => sum + score, 0) / data.scores.length : 0,
+          attemptsCount: data.attempts
+        }))
+        .sort((a, b) => b.averageScore - a.averageScore)
+        .slice(0, 5)
+
+      // Calculate assignment performance for this class
+      const classAssignmentSubmissions = classItem.assignments.flatMap(assignment => assignment.submissions)
+      const assignmentGradesByStudent = new Map<string, { grades: number[], submissions: number, studentName: string, studentEmail: string }>()
+      
+      classAssignmentSubmissions.forEach(submission => {
+        const key = submission.studentId
+        const current = assignmentGradesByStudent.get(key) || { grades: [], submissions: 0, studentName: '', studentEmail: '' }
+        if (submission.grade) {
+          current.grades.push(submission.grade)
+        }
+        current.submissions++
+        assignmentGradesByStudent.set(key, current)
+      })
+
+      // Get student names for assignment submissions
+      const assignmentStudentIds = Array.from(assignmentGradesByStudent.keys())
+      const assignmentStudents = await prisma.user.findMany({
+        where: { id: { in: assignmentStudentIds } },
+        select: { id: true, name: true, email: true }
+      })
+
+      assignmentStudents.forEach(student => {
+        const data = assignmentGradesByStudent.get(student.id)
+        if (data) {
+          data.studentName = student.name
+          data.studentEmail = student.email
+        }
+      })
+
+      const topAssignmentPerformers = Array.from(assignmentGradesByStudent.entries())
+        .map(([studentId, data]) => ({
+          studentName: data.studentName,
+          studentEmail: data.studentEmail,
+          averageGrade: data.grades.length > 0 ? data.grades.reduce((sum, grade) => sum + grade, 0) / data.grades.length : 0,
+          submissionsCount: data.submissions
+        }))
+        .sort((a, b) => b.averageGrade - a.averageGrade)
+        .slice(0, 5)
+
+      // Calculate overall performance metrics
+      const classQuizScores = Array.from(quizScoresByStudent.values()).flatMap(data => data.scores)
+      const classAssignmentGrades = Array.from(assignmentGradesByStudent.values()).flatMap(data => data.grades)
+      const classAverageGrade = [...classQuizScores, ...classAssignmentGrades].length > 0 
+        ? [...classQuizScores, ...classAssignmentGrades].reduce((sum, grade) => sum + grade, 0) / [...classQuizScores, ...classAssignmentGrades].length
+        : 0
+
+      const classCompletionRate = classItem.enrollments.length > 0 
+        ? (Math.max(quizScoresByStudent.size, assignmentGradesByStudent.size) / classItem.enrollments.length) * 100
+        : 0
+
+      const classEngagementScore = classItem.enrollments.length > 0 
+        ? ((quizScoresByStudent.size + assignmentGradesByStudent.size + attendanceByStudent.size) / (classItem.enrollments.length * 3)) * 100
+        : 0
+
+      return {
+        classId: classItem.id,
+        className: classItem.name,
+        classCode: classItem.code,
+        studentCount: classItem.enrollments.length,
+        quizPerformance: {
+          totalQuizzes: classItem.quizzes.length,
+          totalAttempts: classQuizAttempts.length,
+          averageScore: classQuizScores.length > 0 ? classQuizScores.reduce((sum, score) => sum + score, 0) / classQuizScores.length : 0,
+          completionRate: classItem.enrollments.length > 0 ? (quizScoresByStudent.size / classItem.enrollments.length) * 100 : 0,
+          topPerformers: topQuizPerformers
+        },
+        assignmentPerformance: {
+          totalAssignments: classItem.assignments.length,
+          totalSubmissions: classAssignmentSubmissions.length,
+          averageGrade: classAssignmentGrades.length > 0 ? classAssignmentGrades.reduce((sum, grade) => sum + grade, 0) / classAssignmentGrades.length : 0,
+          completionRate: classItem.enrollments.length > 0 ? (assignmentGradesByStudent.size / classItem.enrollments.length) * 100 : 0,
+          topPerformers: topAssignmentPerformers
+        },
+        attendancePerformance: {
+          totalSessions,
+          averageAttendance,
+          presentCount,
+          absentCount,
+          lateCount,
+          excusedCount,
+          topAttendees
+        },
+        overallPerformance: {
+          averageGrade: classAverageGrade,
+          completionRate: classCompletionRate,
+          engagementScore: classEngagementScore
+        }
+      }
+    }))
+
     return NextResponse.json({
       totalStudents,
       totalClasses,
@@ -195,7 +371,8 @@ export async function GET(request: NextRequest) {
         assignmentCompletion: completionRate,
         quizPerformance,
         contentConsumption
-      }
+      },
+      classAnalytics
     })
 
   } catch (error) {

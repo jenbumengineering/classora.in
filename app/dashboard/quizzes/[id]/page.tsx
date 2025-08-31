@@ -8,7 +8,7 @@ import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { ArrowLeft, Edit, BarChart3, Play, Clock, Code, FileText, Calendar, User } from 'lucide-react'
+import { ArrowLeft, Edit, BarChart3, Play, Clock, Code, FileText, Calendar, User, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 
@@ -68,6 +68,32 @@ export default function QuizDetailPage() {
     loadQuiz()
   }, [user, router, quizId])
 
+  const handleDeleteQuiz = async () => {
+    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/quizzes/${quizId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': user?.id || '',
+        },
+      })
+
+      if (response.ok) {
+        toast.success('Quiz deleted successfully!')
+        router.push('/dashboard/quizzes') // Redirect to quizzes list
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete quiz')
+      }
+    } catch (error) {
+      console.error('Error deleting quiz:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete quiz')
+    }
+  }
+
   const loadQuiz = async () => {
     try {
       const response = await fetch(`/api/quizzes/${quizId}`, {
@@ -78,6 +104,31 @@ export default function QuizDetailPage() {
       
       if (response.ok) {
         const quizData = await response.json()
+        
+        // For students, check if they are enrolled in the class
+        if (user?.role === 'STUDENT') {
+          const enrollmentResponse = await fetch(`/api/enrollments?studentId=${user.id}&classId=${quizData.class.id}`, {
+            headers: {
+              'x-user-id': user.id
+            }
+          })
+          
+          if (enrollmentResponse.ok) {
+            const enrollmentData = await enrollmentResponse.json()
+            const isEnrolled = enrollmentData.enrollments.some((e: any) => e.classId === quizData.class.id)
+            
+            if (!isEnrolled) {
+              toast.error('You must be enrolled in this class to view this quiz')
+              router.push('/dashboard/quizzes')
+              return
+            }
+          } else {
+            toast.error('Unable to verify enrollment status')
+            router.push('/dashboard/quizzes')
+            return
+          }
+        }
+        
         setQuiz(quizData)
       } else {
         const errorData = await response.json()
@@ -159,6 +210,13 @@ export default function QuizDetailPage() {
                         <Edit className="w-4 h-4 mr-2" />
                         Edit Quiz
                       </Link>
+                    </Button>
+                    <Button 
+                      variant="destructive"
+                      onClick={handleDeleteQuiz}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Quiz
                     </Button>
                   </div>
                 )}

@@ -1,62 +1,87 @@
 const nodemailer = require('nodemailer');
 
-// Test email configuration
+// Email configuration - Using secure SSL/TLS settings
 const emailConfig = {
-  host: '173.249.24.112', // Use IP directly to avoid IPv6 issues
-  port: 25,
-  secure: false,
+  host: 'server.dnspark.in',
+  port: 465,
+  secure: true, // Use SSL/TLS
+  auth: {
+    user: 'support@classora.in',
+    pass: 'Unbreakable@7001'
+  },
   tls: {
     rejectUnauthorized: false
   },
   debug: true,
-  logger: true,
-  requireTLS: false,
-  ignoreTLS: true
+  logger: true
 };
 
-async function testEmail() {
+async function testEmailConnection() {
   try {
-    console.log('Testing email configuration...');
+    console.log('Testing email connection...');
+    console.log('Host:', emailConfig.host);
+    console.log('Port:', emailConfig.port);
+    console.log('Secure:', emailConfig.secure);
+    console.log('User:', emailConfig.auth.user);
     
-    // Create transporter
     const transporter = nodemailer.createTransport(emailConfig);
     
     // Verify connection
-    console.log('Verifying connection...');
     await transporter.verify();
-    console.log('✓ Connection verified successfully');
+    console.log('✅ Email server connection verified successfully');
     
-    // Send test email to external address
-    console.log('Sending test email to external address...');
-    const info = await transporter.sendMail({
-      from: '"Classora" <noreply@classora.in>',
+    // Send test email
+    const testEmail = {
+      from: '"Classora Test" <support@classora.in>',
       to: 'mainong.jenbum@gmail.com',
-      subject: 'Test Email from VPS Mail Server',
-      text: 'This is a test email from the VPS mail server configuration.',
+      subject: 'Email Configuration Test - Classora.in',
       html: `
-        <h2>Test Email</h2>
-        <p>This is a test email from the <strong>VPS mail server</strong>.</p>
-        <p>Sent at: ${new Date().toISOString()}</p>
-        <p>If you receive this email, the configuration is working!</p>
-      `
-    });
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Email Configuration Test</h2>
+          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p>This is a test email to verify that the email configuration is working correctly.</p>
+            <p><strong>Server:</strong> ${emailConfig.host}</p>
+            <p><strong>Port:</strong> ${emailConfig.port}</p>
+            <p><strong>Secure:</strong> ${emailConfig.secure}</p>
+            <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+          </div>
+          <p style="color: #64748b; font-size: 14px;">
+            If you receive this email, the email service is configured correctly.
+          </p>
+        </div>
+      `,
+      text: 'This is a test email to verify that the email configuration is working correctly.'
+    };
     
-    console.log('✓ Email sent successfully to external address');
+    const info = await transporter.sendMail(testEmail);
+    console.log('✅ Test email sent successfully');
     console.log('Message ID:', info.messageId);
     console.log('Response:', info.response);
     
-    console.log('\n✓ External email sending is now configured and working!');
-    console.log('The application can now send emails to external users.');
-    
+    return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('✗ Email test failed:', error);
+    console.error('❌ Email test failed:', error);
     console.error('Error details:', {
       code: error.code,
       response: error.response,
       command: error.command
     });
+    return { success: false, error: error.message };
   }
 }
 
 // Run the test
-testEmail();
+testEmailConnection()
+  .then(result => {
+    if (result.success) {
+      console.log('\n🎉 Email configuration is working correctly!');
+      process.exit(0);
+    } else {
+      console.log('\n💥 Email configuration test failed!');
+      process.exit(1);
+    }
+  })
+  .catch(error => {
+    console.error('Unexpected error:', error);
+    process.exit(1);
+  });

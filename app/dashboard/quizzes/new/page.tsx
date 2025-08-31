@@ -35,6 +35,7 @@ interface Question {
   correctAnswer?: string
   correctAnswers?: string[] // For multiple selection
   points: number
+  explanation?: string // General explanation for the question
 }
 
 export default function NewQuizPage() {
@@ -96,9 +97,26 @@ export default function NewQuizPage() {
       type: 'MULTIPLE_CHOICE',
       options: ['', '', '', ''],
       correctAnswers: [], // Initialize for multiple selection
-      points: 1
+      points: 1,
+      explanation: ''
     }
     setQuestions([...questions, newQuestion])
+    
+    // Auto-scroll to the new question after a short delay to allow DOM update
+    setTimeout(() => {
+      const questionElement = document.getElementById(`question-${newQuestion.id}`)
+      if (questionElement) {
+        questionElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        })
+        // Add a subtle highlight effect
+        questionElement.classList.add('ring-2', 'ring-orange-500', 'ring-opacity-50')
+        setTimeout(() => {
+          questionElement.classList.remove('ring-2', 'ring-orange-500', 'ring-opacity-50')
+        }, 2000)
+      }
+    }, 100)
   }
 
   // Handle class selection change
@@ -124,7 +142,12 @@ export default function NewQuizPage() {
         // Initialize options when switching to multiple choice or multiple selection
         if (updates.type === 'MULTIPLE_CHOICE' || updates.type === 'MULTIPLE_SELECTION') {
           if (!updatedQuestion.options || updatedQuestion.options.length === 0) {
-            updatedQuestion.options = ['', '', '', '']
+            updatedQuestion.options = [
+              { text: '', isCorrect: false, explanation: '' },
+              { text: '', isCorrect: false, explanation: '' },
+              { text: '', isCorrect: false, explanation: '' },
+              { text: '', isCorrect: false, explanation: '' }
+            ]
           }
           if (updates.type === 'MULTIPLE_SELECTION' && !updatedQuestion.correctAnswers) {
             updatedQuestion.correctAnswers = []
@@ -232,6 +255,7 @@ export default function NewQuizPage() {
           correctAnswer: q.correctAnswer,
           correctAnswers: q.correctAnswers,
           points: q.points,
+          explanation: q.explanation,
         }))
       }
       
@@ -454,7 +478,7 @@ export default function NewQuizPage() {
                       ) : (
                         <div className="space-y-6">
                           {questions.map((question, index) => (
-                            <div key={question.id} className="border border-gray-200 rounded-lg p-4">
+                            <div key={question.id} id={`question-${question.id}`} className="border border-gray-200 rounded-lg p-4 transition-all duration-300">
                               <div className="flex justify-between items-start mb-4">
                                 <h4 className="font-medium">Question {index + 1}</h4>
                                 <Button
@@ -506,35 +530,39 @@ export default function NewQuizPage() {
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Options
                                   </label>
-                                  <div className="space-y-2">
-                                    {(question.options || ['', '', '', '']).map((option, optionIndex) => (
-                                      <div key={optionIndex} className="flex items-center space-x-2">
-                                        <input
-                                          type="text"
-                                          value={option}
-                                          onChange={(e) => updateOption(question.id, optionIndex, e.target.value)}
-                                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                          placeholder={`Option ${optionIndex + 1}`}
-                                        />
-                                        <input
-                                          type="radio"
-                                          name={`correct-${question.id}`}
-                                          value={option}
-                                          onChange={(e) => updateQuestion(question.id, { correctAnswer: e.target.value })}
-                                          className="text-blue-600"
-                                        />
-                                        <span className="text-sm text-gray-500">Correct</span>
-                                        {question.options && question.options.length > 2 && (
-                                          <Button
-                                            type="button"
-                                            onClick={() => removeOption(question.id, optionIndex)}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-600"
-                                          >
-                                            <Minus className="w-3 h-3" />
-                                          </Button>
-                                        )}
+                                  <div className="space-y-4">
+                                    {(question.options || []).map((option, optionIndex) => (
+                                      <div key={optionIndex} className="border border-gray-200 rounded-lg p-3">
+                                        <div className="flex items-center space-x-2 mb-2">
+                                          <input
+                                            type="text"
+                                            value={option}
+                                            onChange={(e) => updateOption(question.id, optionIndex, e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder={`Option ${optionIndex + 1}`}
+                                          />
+                                          <input
+                                            type="radio"
+                                            name={`correct-${question.id}`}
+                                            checked={question.correctAnswer === option}
+                                            onChange={(e) => {
+                                              updateQuestion(question.id, { correctAnswer: option })
+                                            }}
+                                            className="text-blue-600"
+                                          />
+                                          <span className="text-sm text-gray-500">Correct</span>
+                                          {question.options && question.options.length > 2 && (
+                                            <Button
+                                              type="button"
+                                              onClick={() => removeOption(question.id, optionIndex)}
+                                              variant="ghost"
+                                              size="sm"
+                                              className="text-red-600"
+                                            >
+                                              <Minus className="w-3 h-3" />
+                                            </Button>
+                                          )}
+                                        </div>
                                       </div>
                                     ))}
                                     <Button
@@ -556,40 +584,42 @@ export default function NewQuizPage() {
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Options
                                   </label>
-                                  <div className="space-y-2">
-                                    {(question.options || ['', '', '', '']).map((option, optionIndex) => (
-                                      <div key={optionIndex} className="flex items-center space-x-2">
-                                        <input
-                                          type="text"
-                                          value={option}
-                                          onChange={(e) => updateOption(question.id, optionIndex, e.target.value)}
-                                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                          placeholder={`Option ${optionIndex + 1}`}
-                                        />
-                                        <input
-                                          type="checkbox"
-                                          checked={question.correctAnswers?.includes(option) || false}
-                                          onChange={(e) => {
-                                            const currentAnswers = question.correctAnswers || []
-                                            const newAnswers = e.target.checked
-                                              ? [...currentAnswers, option]
-                                              : currentAnswers.filter(ans => ans !== option)
-                                            updateQuestion(question.id, { correctAnswers: newAnswers })
-                                          }}
-                                          className="text-blue-600"
-                                        />
-                                        <span className="text-sm text-gray-500">Correct</span>
-                                        {question.options && question.options.length > 2 && (
-                                          <Button
-                                            type="button"
-                                            onClick={() => removeOption(question.id, optionIndex)}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-600"
-                                          >
-                                            <Minus className="w-3 h-3" />
-                                          </Button>
-                                        )}
+                                  <div className="space-y-4">
+                                    {(question.options || []).map((option, optionIndex) => (
+                                      <div key={optionIndex} className="border border-gray-200 rounded-lg p-3">
+                                        <div className="flex items-center space-x-2 mb-2">
+                                          <input
+                                            type="text"
+                                            value={option}
+                                            onChange={(e) => updateOption(question.id, optionIndex, e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder={`Option ${optionIndex + 1}`}
+                                          />
+                                          <input
+                                            type="checkbox"
+                                            checked={question.correctAnswers?.includes(option) || false}
+                                            onChange={(e) => {
+                                              const currentAnswers = question.correctAnswers || []
+                                              const newAnswers = e.target.checked
+                                                ? [...currentAnswers, option]
+                                                : currentAnswers.filter(ans => ans !== option)
+                                              updateQuestion(question.id, { correctAnswers: newAnswers })
+                                            }}
+                                            className="text-blue-600"
+                                          />
+                                          <span className="text-sm text-gray-500">Correct</span>
+                                          {question.options && question.options.length > 2 && (
+                                            <Button
+                                              type="button"
+                                              onClick={() => removeOption(question.id, optionIndex)}
+                                              variant="ghost"
+                                              size="sm"
+                                              className="text-red-600"
+                                            >
+                                              <Minus className="w-3 h-3" />
+                                            </Button>
+                                          )}
+                                        </div>
                                       </div>
                                     ))}
                                     <Button
@@ -625,7 +655,7 @@ export default function NewQuizPage() {
                               )}
 
                               {/* Points */}
-                              <div>
+                              <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Points
                                 </label>
@@ -637,6 +667,23 @@ export default function NewQuizPage() {
                                   min="1"
                                   max="100"
                                 />
+                              </div>
+
+                              {/* Question Explanation */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Explanation for Correct Answer (Optional)
+                                </label>
+                                <textarea
+                                  value={question.explanation || ''}
+                                  onChange={(e) => updateQuestion(question.id, { explanation: e.target.value })}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Explain why the correct answer is right (shown to students after answering)"
+                                  rows={2}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  This explanation will be shown to students when they answer correctly
+                                </p>
                               </div>
                             </div>
                           ))}

@@ -277,7 +277,7 @@ export default function TeacherProfilePage() {
                                 <p className="text-sm text-gray-600 font-mono">{classData.code}</p>
                                 {classData.description && (
                                   <p className="text-sm text-gray-700 mt-2 line-clamp-2">
-                                    {classData.description}
+                                    {classData.description.replace(/<[^>]*>/g, '')}
                                   </p>
                                 )}
                               </div>

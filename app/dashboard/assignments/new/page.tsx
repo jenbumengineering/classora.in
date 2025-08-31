@@ -185,6 +185,7 @@ export default function NewAssignmentPage() {
         title: formData.title.trim(),
         description: formData.description || '',
         classId: formData.classId,
+        noteId: formData.noteId || undefined,
         dueDate: formData.dueDate || undefined,
         status: status || formData.status, // Use the passed status or fall back to form data
         fileUrl: fileUrl || undefined,

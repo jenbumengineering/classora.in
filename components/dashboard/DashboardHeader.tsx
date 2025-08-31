@@ -119,6 +119,8 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
       window.location.href = `/dashboard/quizzes/${result.id}`
     } else if (result.type === 'assignment') {
       window.location.href = `/dashboard/assignments/${result.id}`
+    } else if (result.type === 'student') {
+      window.location.href = `/dashboard/students/${result.id}`
     }
   }
 
@@ -190,7 +192,7 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
-                placeholder="Search classes, notes, quizzes..."
+                placeholder="Search classes, notes, quizzes, students..."
                 value={searchQuery}
                 onChange={handleSearchInputChange}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
@@ -219,6 +221,7 @@ export function DashboardHeader({ user, onMenuClick }: DashboardHeaderProps) {
                               {result.type === 'note' && '📝'}
                               {result.type === 'quiz' && '🧪'}
                               {result.type === 'assignment' && '📋'}
+                              {result.type === 'student' && '👤'}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">

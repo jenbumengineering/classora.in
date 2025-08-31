@@ -150,6 +150,52 @@ export async function GET(
     const lastEnrollmentActivity = Math.max(...enrollments.map(enrollment => new Date(enrollment.enrolledAt).getTime()))
     const lastActivity = Math.max(lastQuizActivity, lastSubmissionActivity, lastEnrollmentActivity)
 
+    // Get attendance statistics for the primary class (first enrolled class)
+    let attendanceStats = null
+    if (classes.length > 0) {
+      const primaryClassId = classes[0].id
+      const daysAgo = new Date()
+      daysAgo.setDate(daysAgo.getDate() - 90) // Last 90 days
+
+      const sessions = await prisma.attendanceSession.findMany({
+        where: {
+          classId: primaryClassId,
+          professorId: professorId,
+          date: { gte: daysAgo }
+        },
+        include: {
+          records: {
+            where: { studentId: studentId }
+          }
+        },
+        orderBy: { date: 'desc' }
+      })
+
+      const totalSessions = sessions.length
+      const present = sessions.filter(s => s.records[0]?.status === 'PRESENT').length
+      const absent = sessions.filter(s => s.records[0]?.status === 'ABSENT').length
+      const late = sessions.filter(s => s.records[0]?.status === 'LATE').length
+      const excused = sessions.filter(s => s.records[0]?.status === 'EXCUSED').length
+      const notMarked = sessions.filter(s => s.records.length === 0).length
+
+      // Use weighted attendance calculation (Option 3)
+      // PRESENT: 100% weight, LATE: 50% weight, EXCUSED: 75% weight, ABSENT: 0% weight
+      const weightedAttendance = (present * 1.0) + (late * 0.5) + (excused * 0.75) + (absent * 0.0)
+      
+      attendanceStats = {
+        totalSessions,
+        present,
+        absent,
+        late,
+        excused,
+        notMarked,
+        attendanceRate: totalSessions > 0 
+          ? (weightedAttendance / totalSessions * 100).toFixed(1)
+          : '0',
+        primaryClassId
+      }
+    }
+
     return NextResponse.json({
       id: student.id,
       name: student.name,
@@ -171,7 +217,8 @@ export async function GET(
         className: submission.assignment.class.name,
         grade: submission.grade,
         submittedAt: submission.submittedAt
-      }))
+      })),
+      attendanceStats
     })
 
   } catch (error) {
